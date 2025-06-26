@@ -6,7 +6,7 @@
     <title>Günlük Kasa Raporu</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         h1, h2 { color: #d9534f; border-bottom: 2px solid #f0ad4e; padding-bottom: 10px; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px; }
         .section { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
@@ -16,9 +16,10 @@
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
         .form-group input:focus { border-color: #5bc0de; outline: none; box-shadow: 0 0 5px rgba(91, 192, 222, 0.5); }
         .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
-        .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; }
+        .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         .dynamic-list .item input:first-child { flex: 3; }
         .dynamic-list .item input:last-child { flex: 2; }
+        .dynamic-list .item.note-item input { flex: 1; } /* Tek inputlu notlar için */
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; }
         .btn-danger { background-color: #d9534f; }
         .btn:hover { opacity: 0.9; }
@@ -63,6 +64,16 @@
             <div class="total-display">
                 TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span>
             </div>
+        </div>
+        
+        <!-- NOTLAR BÖLÜMÜ -->
+        <div class="section">
+            <h2>Notlar</h2>
+            <p>Günün önemli notlarını buraya ekleyebilirsiniz.</p>
+            <div id="notlar-list" class="dynamic-list">
+                <!-- Dinamik notlar buraya eklenecek -->
+            </div>
+            <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
         </div>
 
         <!-- GİDERLER BÖLÜMÜ -->
@@ -116,7 +127,6 @@
 
     function getFloat(id) {
         const value = document.getElementById(id).value;
-        // Virgülü noktaya çevirerek ondalık sayıya dönüştürmeye hazır hale getir
         const sanitizedValue = value.replace(',', '.');
         return parseFloat(sanitizedValue) || 0;
     }
@@ -125,7 +135,6 @@
         let total = 0;
         const items = document.querySelectorAll(`#${listId} .item input:last-of-type`);
         items.forEach(item => {
-            // Virgülü noktaya çevir
             const sanitizedValue = item.value.replace(',', '.');
             total += parseFloat(sanitizedValue) || 0;
         });
@@ -133,28 +142,16 @@
     }
 
     function hesapla() {
-        // Excel formüllerini JavaScript'e çevirelim
         const b4_genelCiro = getFloat('genelCiro');
-        const d4_vizaGiris = getFloat('tebbankasi'); // Formülde TOPLA(G4:H11) diyor ama görselde sadece TEBBANKASI dolu. Şimdilik böyle alalım.
-
-        // C4 = B4 - D4
+        const d4_vizaGiris = getFloat('tebbankasi');
         const c4_nakitGiris = b4_genelCiro - d4_vizaGiris;
-
-        // Giderler
         const giderlerToplami = getDynamicListTotal('giderler-list');
         const d18_giderPusulasi = getFloat('giderPusulasi');
         const d19_giderToplamlari = giderlerToplami + d18_giderPusulasi;
-
-        // C20 = C4 - D19
         const c20_nakitKalan = c4_nakitGiris - d19_giderToplamlari;
-
         const b21_kasaAcigi = getFloat('kasaAcigi');
         const b22_kasaFazla = getFloat('kasaFazla');
-
-        // B23 = C20 - B21 + B22
         const b23_toplamNakitKalan = c20_nakitKalan - b21_kasaAcigi + b22_kasaFazla;
-        
-        // Sonucu kullanıcıya yine virgüllü göstermek için noktayı virgüle çevir
         document.getElementById('toplamNakitKalan').textContent = b23_toplamNakitKalan.toFixed(2).replace('.', ',');
     }
 
@@ -169,7 +166,7 @@
         
         const valueInput = document.createElement('input');
         valueInput.type = 'text';
-        valueInput.inputMode = 'decimal'; // Mobil için sayısal klavye
+        valueInput.inputMode = 'decimal';
         valueInput.placeholder = valuePlaceholder;
         valueInput.oninput = hesapla;
 
@@ -187,6 +184,29 @@
         list.appendChild(item);
     }
     
+    function createNoteItem(listId, placeholder) {
+        const list = document.getElementById(listId);
+        const item = document.createElement('div');
+        item.className = 'item note-item';
+        
+        const noteInput = document.createElement('input');
+        noteInput.type = 'text';
+        noteInput.placeholder = placeholder;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Sil';
+        removeBtn.className = 'btn btn-danger';
+        removeBtn.onclick = function() { item.remove(); };
+
+        item.appendChild(noteInput);
+        item.appendChild(removeBtn);
+        list.appendChild(item);
+    }
+
+    function notEkle() {
+        createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
+    }
+    
     function giderEkle() {
         createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
     }
@@ -198,20 +218,26 @@
     function indir() {
         const wb = XLSX.utils.book_new();
         const tarih = document.getElementById('current-date').textContent;
-        const genelCiro = getFloat('genelCiro');
         
         const ws_data = [
             ["Alan", "Değer"],
             ["Tarih", tarih],
-            ["Genel Toplam Fiş Cirosu", genelCiro],
-            ["Tebbankası", getFloat('tebbankasi')],
-            ["Gider Pusulası", getFloat('giderPusulasi')],
-            ["Kasa Açığı", getFloat('kasaAcigi')],
-            ["Kasa Fazlası", getFloat('kasaFazla')],
+            ["Genel Toplam Fiş Cirosu", document.getElementById('genelCiro').value],
+            ["Tebbankası", document.getElementById('tebbankasi').value],
+            ["Gider Pusulası", document.getElementById('giderPusulasi').value],
+            ["Kasa Açığı", document.getElementById('kasaAcigi').value],
+            ["Kasa Fazlası", document.getElementById('kasaFazla').value],
             ["Hesaplanan Toplam Nakit Kalan", document.getElementById('toplamNakitKalan').textContent],
             [],
-            ["Giderler"],
+            ["Notlar"],
         ];
+
+        document.querySelectorAll('#notlar-list .item input').forEach(item => {
+            ws_data.push([item.value]);
+        });
+        
+        ws_data.push([]);
+        ws_data.push(["Giderler", "Tutar"]);
 
         document.querySelectorAll('#giderler-list .item').forEach(item => {
             const aciklama = item.children[0].value;
@@ -220,7 +246,7 @@
         });
         
         ws_data.push([]);
-        ws_data.push(["Toptan Satışlar"]);
+        ws_data.push(["Toptan Satışlar", "Tutar"]);
         
          document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
             const aciklama = item.children[0].value;
@@ -233,8 +259,9 @@
         XLSX.writeFile(wb, `Kasa Raporu - ${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // Başlangıçta 5 gider ve 4 toptan satış ekleyelim
+    // Sayfa yüklendiğinde varsayılan elemanları oluştur
     window.onload = function() {
+        notEkle(); // Varsayılan olarak bir not alanı ekle
         for(let i=0; i<5; i++) giderEkle();
         hesapla();
     };
