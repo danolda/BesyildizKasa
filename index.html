@@ -36,38 +36,36 @@
     <div class="grid-container">
         <div class="section">
             <h2>Ana Veri Girişleri</h2>
-            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" placeholder="Örn: 200162,31" oninput="hesapla()"></div>
-            <div class="form-group"><label for="tebbankasi">TEBBANKASI</label><input type="text" inputmode="decimal" id="tebbankasi" placeholder="Örn: 152638,59" oninput="hesapla()"></div>
-            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" placeholder="Örn: 572" oninput="hesapla()"></div>
-            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" placeholder="Örn: 226,47" oninput="hesapla()"></div>
+            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" oninput="hesapla()"></div>
+            <div class="form-group"><label for="vizaGiris">VİZA GİRİŞ (Tüm Banka Kartları Toplamı)</label><input type="text" inputmode="decimal" id="vizaGiris" oninput="hesapla()"></div>
+            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" oninput="hesapla()"></div>
+            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" oninput="hesapla()"></div>
             <div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()"></div>
             <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="0" oninput="hesapla()"></div>
             <div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div>
         </div>
         <div class="section">
             <h2>Giderler</h2>
-            <p>Açıklama ve tutar girin.</p>
             <div id="giderler-list" class="dynamic-list"></div>
             <button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button>
         </div>
         <div class="section">
-            <h2>Toptan Satış Bölümü</h2>
-            <div id="toptan-satis-list" class="dynamic-list">
-                 <div class="item"><input type="text" value="SODEXO" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
-                 <div class="item"><input type="text" value="SETCARD" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
-                 <div class="item"><input type="text" value="TOKEN" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
-                 <div class="item"><input type="text" value="TICKET" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
+            <h2>Banka ve Kartlar</h2>
+            <div id="banka-kart-list" class="dynamic-list">
+                <div class="item"><input type="text" value="TEBBANKASI" readonly><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="SODEXO" readonly><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="SET CARD" readonly><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="TOKEN FLEX" readonly><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="TICKET" readonly><input type="text" inputmode="decimal" oninput="hesapla()"></div>
             </div>
-            <button class="btn" onclick="toptanSatisEkle()">Yeni Toptan Satış Ekle</button>
+            <button class="btn" onclick="bankaEkle()">Yeni Banka/Kart Ekle</button>
         </div>
         <div class="section">
             <h2>Notlar</h2>
-            <p>Günün önemli notlarını ekleyin.</p>
             <div id="notlar-list" class="dynamic-list"></div>
             <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
         </div>
     </div>
-
     <div class="footer-controls">
         <button class="btn download-btn" onclick="indir()">Raporu Excel (.xlsx) Olarak İndir</button>
     </div>
@@ -79,31 +77,36 @@
     document.getElementById('current-date').textContent = tarihObjesi.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     function getFloat(elementId) {
-        const value = document.getElementById(elementId).value.replace(',', '.');
+        const el = document.getElementById(elementId);
+        if (!el) return 0;
+        const value = el.value.replace(',', '.');
         return parseFloat(value) || 0;
     }
 
-    function getDynamicListTotal(listId) {
-        let total = 0;
-        document.querySelectorAll(`#${listId} .item input:last-of-type`).forEach(item => {
-            total += (parseFloat(item.value.replace(',', '.')) || 0);
-        });
-        return total;
-    }
-
     function hesapla() {
-        const c4_nakitGiris = getFloat('genelCiro') - getFloat('tebbankasi');
-        const d19_giderToplamlari = getDynamicListTotal('giderler-list') + getFloat('giderPusulasi');
-        const c20_nakitKalan = c4_nakitGiris - d19_giderToplamlari;
-        const b23_toplamNakitKalan = c20_nakitKalan - getFloat('kasaAcigi') + getFloat('kasaFazla');
-        document.getElementById('toplamNakitKalan').textContent = b23_toplamNakitKalan.toFixed(2).replace('.', ',');
+        const genelCiro = getFloat('genelCiro');
+        const vizaGiris = getFloat('vizaGiris');
+        const giderPusulasi = getFloat('giderPusulasi');
+        const kasaAcigi = getFloat('kasaAcigi');
+        const kasaFazla = getFloat('kasaFazla');
+        
+        let giderlerToplami = 0;
+        document.querySelectorAll('#giderler-list input:last-of-type').forEach(item => {
+            giderlerToplami += (parseFloat(item.value.replace(',', '.')) || 0);
+        });
+
+        const c4_nakitGiris = genelCiro - vizaGiris;
+        const d19_toplamGider = giderPusulasi + giderlerToplami;
+        const c20_nakitKalan = c4_nakitGiris - d19_toplamGider;
+        const b23_toplamNakit = c20_nakitKalan - kasaAcigi + kasaFazla;
+        
+        document.getElementById('toplamNakitKalan').textContent = b23_toplamNakit.toFixed(2).replace('.', ',');
     }
 
-    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, isKeyReadonly = false) {
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder) {
         const list = document.getElementById(listId);
         const item = document.createElement('div'); item.className = 'item';
         const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder;
-        if(isKeyReadonly) keyInput.readOnly = true;
         const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = valuePlaceholder; valueInput.oninput = hesapla;
         const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
         removeBtn.onclick = () => { item.remove(); hesapla(); };
@@ -121,82 +124,101 @@
 
     const notEkle = () => createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
     const giderEkle = () => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
-    const toptanSatisEkle = () => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
+    const bankaEkle = () => createDynamicItem('banka-kart-list', 'Banka/Kart Adı', 'Tutar');
 
     function indir() {
-        // --- 1. Stil Tanımlamaları ---
-        const fontBold = { name: 'Calibri', sz: 11, bold: true };
-        const fontRedBold = { name: 'Calibri', sz: 12, bold: true, color: { rgb: "FF0000" } };
-        const fillYellow = { fgColor: { rgb: "FFFF00" } };
-        const fillRed = { fgColor: { rgb: "FF0000" } };
+        const wb = XLSX.utils.book_new();
+        const ws = {}; // Boş bir worksheet objesi
+        const data = {}; // Hücre verilerini tutacak obje
+
+        // --- STİL TANIMLAMALARI ---
+        const styleBold = { font: { bold: true } };
+        const styleCurrency = { numFmt: "#,##0.00;-#,##0.00;0" };
+        const styleBoldCurrency = { font: { bold: true }, numFmt: "#,##0.00;-#,##0.00;0" };
+
+        // --- HÜCRELERE VERİ YERLEŞTİRME ---
+        // Verileri ve stilleri bir obje olarak tanımlamak daha temizdir
+        function setCell(ref, value, style) {
+            data[ref] = { v: value };
+            if (typeof value === 'number') data[ref].t = 'n';
+            if (style) data[ref].s = style;
+        }
+
+        // STATİK BAŞLIKLAR
+        setCell('A1', 'GÜNLÜK KASA RAPORU', styleBold);
+        setCell('C1', 'TÜRKİŞ', styleBold);
+        setCell('A2', 'FÖYDE SADECE BEYAZ OLAN KISIMLARI YAZINIZ');
+        setCell('B2', 'TARİH :', styleBold);
+        setCell('C2', document.getElementById('current-date').textContent);
+        setCell('A3', 'AÇIKLAMA', styleBold);
+        setCell('B3', 'GÜNSONU TOPLAM', styleBold);
+        setCell('C3', 'NAKİT GİRİŞ', styleBold);
+        setCell('D3', 'VİZA GİRİŞ', styleBold);
+        setCell('F3', 'BANKALAR', styleBold);
+        setCell('I3', 'NOTLAR', styleBold);
         
-        const styleHeader = { font: fontRedBold, fill: fillYellow };
-        const styleSubHeader = { font: fontBold, fill: fillYellow };
-        const styleYellow = { fill: fillYellow };
-        const styleRed = { fill: fillRed };
-        const styleCurrency = { numFmt: "#,##0.00", font: fontBold };
-        const styleBold = { font: fontBold };
+        // ANA VERİLER
+        setCell('A4', 'GENEL TOPLAM FİŞ CİROSU');
+        setCell('B4', getFloat('genelCiro'), styleBoldCurrency);
+        setCell('E4', getFloat('vizaGiris'), styleBoldCurrency);
+        setCell('H13', getFloat('fisSayisi'));
+        
+        // DİNAMİK GİDERLER
+        let giderRow = 7; // A7'den başla
+        document.querySelectorAll('#giderler-list .item').forEach(item => {
+            setCell(`A${giderRow}`, item.children[0].value);
+            setCell(`D${giderRow}`, parseFloat(item.children[1].value.replace(',', '.')) || 0, styleCurrency);
+            giderRow++;
+        });
+        const giderEndRow = giderRow - 1;
 
-        // --- 2. Veri Hazırlama ---
-        const ws_data = [
-            // Boşluklar için null kullanıyoruz
-            [{v: "GÜNLÜK KASA RAPORU", s: styleHeader}, null, {v: "TÜRKİŞ", s: styleHeader}],
-            [{v: "FÖYDE SADECE BEYAZ OLAN KISIMLARI YAZINIZ", s: styleRed}, {v: "TARİH :", s: styleSubHeader}, {v: document.getElementById('current-date').textContent, s: styleSubHeader}],
-            [{v: "AÇIKLAMA", s: styleSubHeader}, {v: "GÜNSONU TOPLAM", s: styleSubHeader}, {v: "NAKİT GİRİŞ", s: styleSubHeader}, {v: "VİZA GİRİŞ", s: styleSubHeader}, null, {v:"BANKALAR", s:styleSubHeader}, null, null, null, {v:"NOTLAR", s:styleSubHeader}],
-            [{v: "GENEL TOPLAM FİŞ CİROSU", s: styleYellow}, {t:'n', v:getFloat('genelCiro'), s:styleCurrency}, null, {t:'n', v:getFloat('tebbankasi'), s:styleCurrency}, null, {v: "TEBBANKASI", s:styleYellow}, {t:'n', v:getFloat('tebbankasi'), s:styleCurrency}],
-            [],
-            [{v: "EKMEK ÖDEMESİ 80 ADET", s: styleYellow}],
-            [{v: "PERSONEL EKMEK", s: styleYellow}],
-            [null,null,null,null,null, {v:"SODEXO", s:styleYellow}],
-            [null,null,null,null,null, {v:"SET CARD", s:styleYellow}],
-            [null,null,null,null,null, {v:"TOKEN FLEX", s:styleYellow}],
-            [null,null,null,null,null, {v:"TICKET", s:styleYellow}],
-            [null,null,null,null,null, {v:"TOPLAM", s:styleYellow}],
-            [null,null,null,null,null, {v:"FİŞ SAYISI", s:styleYellow}, {t:'n', v:getFloat('fisSayisi'), s:styleBold}],
-            [null,null,null,null,null, {v:"Z SONU İNDİRİM", s:styleYellow}],
-            [],
-            [],
-            [{v: "GİDER PUSULASININ TOPLAM RAKAMINI YAZINIZ", s: {fill: {fgColor:{rgb:"FFC7CE"}}}}],
-            [null, null, null, {t:'n', v:getFloat('giderPusulasi'), s:styleCurrency}],
-            [{v: "GİDER TOPLAMLARI", s:styleYellow}],
-            [{v: "NAKİT KALAN", s:styleYellow}],
-            [{v: "KASA AÇIĞI YAZ :", s:styleYellow}, {t:'n', v:getFloat('kasaAcigi'), s:styleBold}],
-            [{v: "KASA FAZLA YAZ :", s:styleYellow}, {t:'n', v:getFloat('kasaFazla'), s:styleBold}],
-            [{v: "TOPLAM NAKİT KALAN PARA:", s:styleYellow}]
-        ];
-
-        // --- 3. Dinamik Verileri Ekleme ---
-        let currentRow = 4; // Notların başlayacağı satır (J sütunu için)
-        document.querySelectorAll('#notlar-list .item input').forEach(input => {
-             if(!ws_data[currentRow]) ws_data[currentRow] = []; // Satır yoksa oluştur
-             while(ws_data[currentRow].length < 9) ws_data[currentRow].push(null); // J sütununa kadar boşluk doldur
-             ws_data[currentRow].push({v: input.value, s: styleYellow});
-             currentRow++;
+        // DİNAMİK BANKALAR
+        let bankaRow = 4; // F4'ten başla
+        document.querySelectorAll('#banka-kart-list .item').forEach(item => {
+            setCell(`F${bankaRow}`, item.children[0].value);
+            setCell(`G${bankaRow}`, parseFloat(item.children[1].value.replace(',', '.')) || 0, styleCurrency);
+            bankaRow++;
         });
 
-        // --- 4. Çalışma Sayfası Oluşturma ---
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        // DİNAMİK NOTLAR
+        let notRow = 4; // I4'ten başla
+        document.querySelectorAll('#notlar-list .item input').forEach(input => {
+            setCell(`I${notRow}`, input.value);
+            notRow++;
+        });
+
+        // ALT TOPLAMLAR
+        setCell('A17', 'GİDER PUSULASININ TOPLAM RAKAMINI YAZINIZ');
+        setCell('D18', getFloat('giderPusulasi'), styleCurrency);
+        setCell('A19', 'GİDER TOPLAMLARI');
+        setCell('A20', 'NAKİT KALAN');
+        setCell('A21', 'KASA AÇIĞI YAZ :');
+        setCell('B21', getFloat('kasaAcigi'), styleCurrency);
+        setCell('A22', 'KASA FAZLA YAZ :');
+        setCell('B22', getFloat('kasaFazla'), styleCurrency);
+        setCell('A23', 'TOPLAM NAKİT KALAN PARA:', styleBold);
         
-        // --- 5. Gelişmiş Ayarlar: Hücre Birleştirme ve Sütun Genişlikleri ---
-        ws["!merges"] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, // GÜNLÜK KASA RAPORU
-            { s: { r: 0, c: 2 }, e: { r: 0, c: 3 } }, // TÜRKİŞ
-            { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } }, // Tarih
-            { s: { r: 3, c: 5 }, e: { r: 3, c: 6 } }, // BANKALAR
-            { s: { r: 17, c: 0 }, e: { r: 17, c: 2 } }, // GİDER PUSULASI...
+        // FORMÜLLER
+        data['C4'] = { f: 'B4-E4', s: styleBoldCurrency };
+        data['D19'] = { f: `SUM(D7:D${giderEndRow})+D18`, s: styleBoldCurrency };
+        data['C20'] = { f: 'C4-D19', s: styleBoldCurrency };
+        data['B23'] = { f: 'C20-B21+B22', s: styleBoldCurrency };
+        
+        // --- WORKSHEET YAPILANDIRMASI ---
+        ws['!ref'] = `A1:K${Math.max(30, giderRow, bankaRow, notRow)}`;
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } } // GÜNLÜK KASA RAPORU
         ];
-        ws["!cols"] = [
-            { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 2 }, 
-            { wch: 15 }, { wch: 15 }, { wch: 2 }, { wch: 2 }, { wch: 30 }
+        ws['!cols'] = [
+            { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+            { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
         ];
 
-        // --- 6. Formülleri Ekleme ---
-        // Gerekli formülleri buraya ekleyebiliriz, örnek:
-        XLSX.utils.sheet_add_aoa(ws, [[{t:'n', f:"B4-D4", s:styleCurrency}]], { origin: "C3" });
-        XLSX.utils.sheet_add_aoa(ws, [[{t:'n', f:`${getFloat('giderPusulasi')}+${getDynamicListTotal('giderler-list')}`, s:styleCurrency}]], { origin: "D19" });
+        // Hazırlanan veri objesini worksheet'e ata
+        for (const key in data) {
+            ws[key] = data[key];
+        }
         
-        // --- 7. Dosyayı Oluştur ve İndir ---
-        const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Günlük Rapor");
         XLSX.writeFile(wb, `Kasa Raporu - ${tarihObjesi.toISOString().slice(0,10)}.xlsx`);
     }
