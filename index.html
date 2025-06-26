@@ -1,553 +1,223 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Günlük Kasa Föyü</title>
-    <!--  NOTE  ➜  xlsx-js-style fork is required for *writing* styles  -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günlük Kasa Föyü - Veri Kopyalayıcı</title>
     <style>
-        /* -------- UI  (değişmedi) ---------- */
-        :root {
-            --yellow: #ffff00;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-                Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #d9534f;
-            border-bottom: 2px solid #f0ad4e;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 40px;
-        }
-        .section {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        .section h2 {
-            font-size: 1.2em;
-            color: #5bc0de;
-            margin-top: 0;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-        .form-group input:focus {
-            border-color: #5bc0de;
-            outline: none;
-            box-shadow: 0 0 5px rgba(91, 192, 222, 0.5);
-        }
-        .total-display {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0ad4e;
-            color: #fff;
-            font-size: 1.5em;
-            font-weight: bold;
-            text-align: center;
-            border-radius: 4px;
-        }
-        .dynamic-list .item {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-        .dynamic-list .item input:first-child {
-            flex: 3;
-        }
-        .dynamic-list .item input:last-child {
-            flex: 2;
-        }
-        .dynamic-list .item.note-item input {
-            flex: 1;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            margin-top: 10px;
-        }
-        .btn-danger {
-            background-color: #d9534f;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-        .footer-controls {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .download-btn {
-            background-color: #337ab7;
-            font-size: 1.2em;
-            padding: 15px 25px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #d9534f; border-bottom: 2px solid #f0ad4e; padding-bottom: 10px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px; }
+        .section { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        .section h2 { font-size: 1.2em; color: #5bc0de; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        .form-group input:focus { border-color: #5bc0de; outline: none; box-shadow: 0 0 5px rgba(91, 192, 222, 0.5); }
+        .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
+        .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .dynamic-list .item input:first-child { flex: 3; }
+        .dynamic-list .item input:last-child { flex: 2; }
+        .dynamic-list .item.note-item input { flex: 1; }
+        .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; }
+        .btn-danger { background-color: #d9534f; }
+        .btn:hover { opacity: 0.9; }
+        .footer-controls { text-align: center; margin-top: 30px; }
+        .copy-btn { background-color: #007bff; font-size: 1.2em; padding: 15px 25px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>GÜNLÜK KASA FÖYÜ</h1>
-        <p><strong>Tarih:</strong> <span id="current-date"></span></p>
 
-        <div class="grid-container">
-            <!-- ---------- Ana Giriş ---------- -->
-            <div class="section">
-                <h2>Ana Girişler</h2>
-                <div class="form-group">
-                    <label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="genelCiro"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <div class="form-group">
-                    <label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="giderPusulasi"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <div class="form-group">
-                    <label for="fisSayisi">FİŞ SAYISI</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="fisSayisi"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <div class="form-group">
-                    <label for="zSonuIndirim">Z SONU İNDİRİM</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="zSonuIndirim"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <hr />
-                <div class="form-group">
-                    <label for="kasaAcigi">KASA AÇIĞI YAZ</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="kasaAcigi"
-                        placeholder="0"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <div class="form-group">
-                    <label for="kasaFazla">KASA FAZLA YAZ</label
-                    ><input
-                        type="text"
-                        inputmode="decimal"
-                        id="kasaFazla"
-                        placeholder="0"
-                        oninput="hesapla()"
-                    />
-                </div>
-                <div class="total-display">
-                    TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span>
-                </div>
-            </div>
-
-            <!-- ---------- Giderler ---------- -->
-            <div class="section">
-                <h2>Giderler</h2>
-                <div id="giderler-list" class="dynamic-list">
-                    <div class="item">
-                        <input
-                            type="text"
-                            value="EKMEK ÖDEMESİ"
-                            readonly
-                        /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="PERSONEL EKMEK" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                </div>
-                <button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button>
-            </div>
-
-            <!-- ---------- Banka & Kart ---------- -->
-            <div class="section">
-                <h2>Banka ve Kartlar</h2>
-                <div id="banka-kart-list" class="dynamic-list">
-                    <div class="item">
-                        <input type="text" value="TEB BANKASI" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="ZİRAAT BANKASI" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="SODEXO" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="SET CARD" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="TOKEN FLEX" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                    <div class="item">
-                        <input type="text" value="TICKET" readonly /><input
-                            type="text"
-                            inputmode="decimal"
-                            oninput="hesapla()"
-                        />
-                    </div>
-                </div>
-                <button class="btn" onclick="bankaEkle()">
-                    Yeni Banka/Kart Ekle
-                </button>
-            </div>
-
-            <!-- ---------- Notlar ---------- -->
-            <div class="section">
-                <h2>Notlar</h2>
-                <div id="notlar-list" class="dynamic-list"></div>
-                <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
-            </div>
-        </div>
-
-        <div class="footer-controls">
-            <button class="btn download-btn" onclick="indir()">
-                Raporu Excel (.xlsx) Olarak İndir
-            </button>
-        </div>
+<div class="container">
+    <h1>GÜNLÜK KASA FÖYÜ</h1>
+    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butona basın ve Excel'deki boş şablonunuzda A1 hücresine yapıştırın.</p>
+    
+    <div class="footer-controls">
+        <button class="btn copy-btn" onclick="copyDataForExcel()">Excel İçin Verileri Panoya Kopyala</button>
     </div>
 
-    <script>
-        /* --------------  Yardımcı fonksiyonlar  ---------------- */
-        const today = new Date();
-        document.getElementById("current-date").textContent = today.toLocaleDateString(
-            "tr-TR",
-            {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                weekday: "long",
-            }
-        );
+    <div class="grid-container">
+        <div class="section">
+            <h2>Ana Girişler</h2>
+            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" oninput="hesapla()"></div>
+            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" oninput="hesapla()"></div>
+            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" oninput="hesapla()"></div>
+            <div class="form-group"><label for="zSonuIndirim">Z SONU İNDİRİM</label><input type="text" inputmode="decimal" id="zSonuIndirim" oninput="hesapla()"></div>
+            <hr>
+            <div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()"></div>
+            <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="0" oninput="hesapla()"></div>
+            <div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div>
+        </div>
 
-        function toFloat(text) {
-            if (!text) return 0;
-            return parseFloat((text + "").replace(",", ".")) || 0;
+        <div class="section">
+            <h2>Giderler</h2>
+            <div id="giderler-list" class="dynamic-list">
+                 <div class="item"><input type="text" value="EKMEK ÖDEMESİ 80 ADET"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                 <div class="item"><input type="text" value="PERSONEL EKMEK"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+            </div>
+            <button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button>
+        </div>
+        
+        <div class="section">
+            <h2>Banka ve Kartlar</h2>
+            <div id="banka-kart-list" class="dynamic-list">
+                <div class="item"><input type="text" value="TEBBANKASI"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="SODEXO"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="SET CARD"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="TOKEN FLEX"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+                <div class="item"><input type="text" value="TICKET"><input type="text" inputmode="decimal" oninput="hesapla()"></div>
+            </div>
+            <button class="btn" onclick="bankaEkle()">Yeni Banka/Kart Ekle</button>
+        </div>
+        
+        <div class="section">
+            <h2>Notlar</h2>
+            <div id="notlar-list" class="dynamic-list"></div>
+            <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tarihObjesi = new Date();
+    const tarihYazisi = tarihObjesi.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+
+    function getFloat(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return 0;
+        const value = el.value.replace(',', '.');
+        return parseFloat(value) || 0;
+    }
+    
+    function getListTotal(listId) {
+        let total = 0;
+        document.querySelectorAll(`#${listId} input[type='text'][inputmode='decimal']`).forEach(item => {
+            total += (parseFloat(item.value.replace(',', '.')) || 0);
+        });
+        return total;
+    }
+
+    function hesapla() {
+        // ... (hesapla fonksiyonu web arayüzü için aynı kalabilir, kopyalanan veriyi etkilemez)
+        const genelCiro = getFloat('genelCiro');
+        const vizaGiris = getListTotal('banka-kart-list');
+        const giderPusulasi = getFloat('giderPusulasi');
+        const kasaAcigi = getFloat('kasaAcigi');
+        const kasaFazla = getFloat('kasaFazla');
+        const digerGiderler = getListTotal('giderler-list');
+        const nakitGiris = genelCiro - vizaGiris;
+        const toplamGider = giderPusulasi + digerGiderler;
+        const nakitKalan = nakitGiris - toplamGider;
+        const toplamNakit = nakitKalan - kasaAcigi + kasaFazla;
+        document.getElementById('toplamNakitKalan').textContent = toplamNakit.toFixed(2).replace('.', ',');
+    }
+
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, isKeyReadonly = false) {
+        const list = document.getElementById(listId);
+        const item = document.createElement('div'); item.className = 'item';
+        const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder;
+        if(isKeyReadonly) keyInput.readOnly = true;
+        const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = valuePlaceholder; valueInput.oninput = hesapla;
+        const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
+        removeBtn.onclick = () => { item.remove(); hesapla(); };
+        item.append(keyInput, valueInput, removeBtn); list.appendChild(item);
+    }
+    
+    function createNoteItem(listId, placeholder) {
+        const list = document.getElementById(listId);
+        const item = document.createElement('div'); item.className = 'item note-item';
+        const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder;
+        const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
+        removeBtn.onclick = () => item.remove();
+        item.append(noteInput, removeBtn); list.appendChild(item);
+    }
+
+    const notEkle = () => createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
+    const giderEkle = () => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar', false);
+    const bankaEkle = () => createDynamicItem('banka-kart-list', 'Banka/Kart Adı', 'Tutar', false);
+
+    function copyDataForExcel() {
+        // Excel'in anlayacağı bir tablo yapısı (2D Array) oluşturalım.
+        // Boyutunu dinamik listelere göre ayarlarız.
+        const grid = Array(50).fill(null).map(() => Array(15).fill(''));
+
+        function formatNumber(num) {
+            // Excel'in ondalık ayıracını doğru anlaması için noktaya çeviriyoruz.
+            return num.toFixed(2).replace('.', ',');
         }
 
-        function listTotal(selector) {
-            let sum = 0;
-            document.querySelectorAll(selector).forEach((el) => {
-                sum += toFloat(el.value);
-            });
-            return sum;
-        }
+        // --- Verileri Hesapla ---
+        const genelCiro = getFloat('genelCiro');
+        const bankaListesi = Array.from(document.querySelectorAll("#banka-kart-list .item"));
+        const vizaGiris = bankaListesi.reduce((sum, item) => sum + (parseFloat(item.children[1].value.replace(',', '.')) || 0), 0);
+        const nakitGiris = genelCiro - vizaGiris;
+        
+        const giderListesi = Array.from(document.querySelectorAll("#giderler-list .item"));
+        const digerGiderler = giderListesi.reduce((sum, item) => sum + (parseFloat(item.children[1].value.replace(',', '.')) || 0), 0);
+        const giderPusulasi = getFloat('giderPusulasi');
+        const toplamGider = digerGiderler + giderPusulasi;
 
-        function hesapla() {
-            const genelCiro = toFloat(document.getElementById("genelCiro").value);
-            const giderPusulasi = toFloat(
-                document.getElementById("giderPusulasi").value
-            );
-            const fisSayisi = toFloat(document.getElementById("fisSayisi").value);
-            const zSonuIndirim = toFloat(
-                document.getElementById("zSonuIndirim").value
-            );
-            const kasaAcigi = toFloat(document.getElementById("kasaAcigi").value);
-            const kasaFazla = toFloat(document.getElementById("kasaFazla").value);
+        const nakitKalan = nakitGiris - toplamGider;
+        const kasaAcigi = getFloat('kasaAcigi');
+        const kasaFazla = getFloat('kasaFazla');
+        const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
 
-            const bankalarToplami = listTotal(
-                "#banka-kart-list input[inputmode=decimal]"
-            );
-            const digerGiderler = listTotal("#giderler-list input[inputmode=decimal]");
+        // --- Grid'i Doldur ---
+        grid[1][2] = tarihYazisi; // C2
+        
+        grid[3][1] = formatNumber(genelCiro);      // B4
+        grid[3][2] = formatNumber(nakitGiris);     // C4
+        grid[3][3] = formatNumber(vizaGiris);      // D4
 
-            const nakitGiris = genelCiro - bankalarToplami;
-            const toplamGider = giderPusulasi + digerGiderler;
-            const nakitKalan = nakitGiris - toplamGider - kasaAcigi + kasaFazla;
+        // Giderler
+        let giderRow = 5; // A6'dan başlar
+        giderListesi.forEach(item => {
+            grid[giderRow][0] = item.children[0].value;
+            grid[giderRow][3] = formatNumber(parseFloat(item.children[1].value.replace(',', '.')) || 0);
+            giderRow++;
+        });
+        
+        // Bankalar
+        let bankaRow = 3; // F4'ten başlar
+        bankaListesi.forEach(item => {
+            grid[bankaRow][5] = item.children[0].value; // Sütun F
+            grid[bankaRow][6] = formatNumber(parseFloat(item.children[1].value.replace(',', '.')) || 0); // Sütun G
+            bankaRow++;
+        });
+        grid[11][6] = formatNumber(vizaGiris); // G12 (Banka Toplamı)
 
-            document.getElementById("toplamNakitKalan").textContent = nakitKalan
-                .toFixed(2)
-                .replace(".", ",");
-        }
+        // Notlar
+        let notRow = 2; // J3'ten başlar
+        document.querySelectorAll('#notlar-list .item input').forEach(input => {
+            grid[notRow][9] = input.value;
+            notRow++;
+        });
 
-        const notEkle = () => {
-            const list = document.getElementById("notlar-list");
-            const div = document.createElement("div");
-            div.className = "item note-item";
-            div.innerHTML =
-                '<input type="text" placeholder="Notunuzu yazın..." /> <button class="btn btn-danger" onclick="this.parentElement.remove()">Sil</button>';
-            list.appendChild(div);
-        };
-        const giderEkle = () => {
-            const list = document.getElementById("giderler-list");
-            const div = document.createElement("div");
-            div.className = "item";
-            div.innerHTML =
-                '<input type="text" placeholder="Açıklama" /> <input inputmode="decimal" type="text" placeholder="Tutar" oninput="hesapla()" /> <button class="btn btn-danger" onclick="this.parentElement.remove(); hesapla()">Sil</button>';
-            list.appendChild(div);
-        };
-        const bankaEkle = () => {
-            const list = document.getElementById("banka-kart-list");
-            const div = document.createElement("div");
-            div.className = "item";
-            div.innerHTML =
-                '<input type="text" placeholder="Banka / Kart" /> <input inputmode="decimal" type="text" placeholder="Tutar" oninput="hesapla()" /> <button class="btn btn-danger" onclick="this.parentElement.remove(); hesapla()">Sil</button>';
-            list.appendChild(div);
-        };
+        // Alt Toplamlar
+        grid[12][6] = getFloat('fisSayisi');
+        grid[13][6] = formatNumber(getFloat('zSonuIndirim'));
+        grid[17][3] = formatNumber(giderPusulasi); // D18
+        grid[18][3] = formatNumber(toplamGider); // D19
+        grid[19][2] = formatNumber(nakitKalan); // C20
+        grid[20][1] = formatNumber(kasaAcigi); // B21
+        grid[21][1] = formatNumber(kasaFazla); // B22
+        grid[22][1] = formatNumber(toplamNakitKalan); // B23
 
-        /* --------------  EXCEL EXPORT  ---------------- */
-        function indir() {
-            // ‼️ xlsx-js-style kullanıldığı için stiller korunur.
-            const wb = XLSX.utils.book_new();
-            const ws = {};
+        // --- Grid'i Kopyalanacak Metne Dönüştür ---
+        // Her sütun arasına TAB (\t), her satır sonuna YENİ SATIR (\n) karakteri koyarız.
+        const tsvText = grid.map(row => row.join('\t')).join('\n');
 
-            // -------- Stil Kütüphanesi --------
-            const FontBold = { name: "Arial", bold: true };
-            const FontBigBold = { name: "Arial", sz: 14, bold: true };
-            const FontRedBold = { name: "Arial", bold: true, color: { rgb: "FF0000" } };
+        // --- Panoya Kopyala ---
+        navigator.clipboard.writeText(tsvText).then(() => {
+            alert('Veri panoya kopyalandı! Şimdi Excel\'e gidip A1 hücresine yapıştırabilirsiniz.');
+        }, (err) => {
+            alert('Hata: Veri kopyalanamadı. Lütfen tekrar deneyin. Hata: ' + err);
+        });
+    }
 
-            const FillYellow = {
-                type: "pattern",
-                patternType: "solid",
-                fgColor: { rgb: "FFFF00" },
-            };
-            const FillRed = {
-                type: "pattern",
-                patternType: "solid",
-                fgColor: { rgb: "FF0000" },
-            };
-            const FillPink = {
-                type: "pattern",
-                patternType: "solid",
-                fgColor: { rgb: "FFC7CE" },
-            };
+    window.onload = () => { notEkle(); hesapla(); };
+</script>
 
-            const CurrencyFmt = "#,##0.00";
-
-            // Yardımcı hücre yazma
-            const data = {};
-            function set(ref, value, style = {}) {
-                data[ref] = {
-                    v: value,
-                    t: typeof value === "number" ? "n" : "s",
-                    s: style,
-                };
-            }
-            function setFormula(ref, formula, style = {}) {
-                data[ref] = { f: formula, t: "n", s: style };
-            }
-
-            /* ---------- STATİK METİN & BAŞLIKLAR ---------- */
-            set("A1", "GÜNLÜK KASA RAPORU", { font: FontBigBold });
-            set("C1", "TÜRKİŞ", { font: FontRedBold });
-            set("A2", "FÖYDE SADECE BEYAZ OLAN KISIMLARI YAZINIZ", {
-                font: FontRedBold,
-                fill: FillRed,
-            });
-            set("B2", "TARİH :", { font: FontBold, fill: FillYellow });
-            set("C2", document.getElementById("current-date").textContent, {
-                font: FontBold,
-                fill: FillYellow,
-            });
-
-            // Sütun başlıkları
-            [
-                ["A3", "AÇIKLAMA"],
-                ["B3", "GÜNSONU TOPLAM"],
-                ["C3", "NAKİT GİRİŞ"],
-                ["D3", "VİZA GİRİŞ"],
-                ["F3", "BANKALAR"],
-                ["J3", "NOTLAR"],
-            ].forEach(([cell, txt]) => set(cell, txt, { font: FontBold, fill: FillYellow }));
-
-            /* ---------- ANA VERİLER ---------- */
-            set("A4", "GENEL TOPLAM FİŞ CİROSU", { fill: FillYellow });
-            set("B4", toFloat(document.getElementById("genelCiro").value), {
-                numFmt: CurrencyFmt,
-            });
-
-            // Gider pusulası (pembe alan)
-            set(
-                "A17",
-                "GİDER PUSULASININ TOPLAM RAKAMINI YAZINIZ",
-                { fill: FillPink }
-            );
-            set("D18", toFloat(document.getElementById("giderPusulasi").value), {
-                numFmt: CurrencyFmt,
-            });
-
-            /* ---------- DİNAMİK LİSTELER ---------- */
-            // Gider satırları
-            let r = 6;
-            document.querySelectorAll("#giderler-list .item").forEach((it) => {
-                const aciklama = it.children[0].value;
-                const tutar = toFloat(it.children[1].value);
-                set(`A${r}`, aciklama, { fill: FillYellow });
-                set(`D${r}`, tutar, { numFmt: CurrencyFmt });
-                r++;
-            });
-            const giderLastRow = r - 1;
-
-            // Bankalar
-            let rb = 4;
-            document.querySelectorAll("#banka-kart-list .item").forEach((it) => {
-                const ad = it.children[0].value;
-                const tut = toFloat(it.children[1].value);
-                set(`F${rb}`, ad, { fill: FillYellow });
-                set(`G${rb}`, tut, { numFmt: CurrencyFmt });
-                rb++;
-            });
-            const bankaLastRow = rb - 1;
-
-            // Notlar
-            let rn = 4;
-            document
-                .querySelectorAll("#notlar-list .item.note-item input")
-                .forEach((inp) => {
-                    set(`J${rn}`, inp.value, { fill: FillYellow });
-                    rn++;
-                });
-
-            /* ---------- TOPLAM / FORMÜLLER ---------- */
-            // Viza Giriş = Bankalar toplami (G kolonu)
-            setFormula("D4", `SUM(G4:G${bankaLastRow})`, { numFmt: CurrencyFmt });
-            // Nakit Giriş = B4 - D4
-            setFormula("C4", `B4-D4`, { numFmt: CurrencyFmt });
-
-            // Bankalar toplam etiketi
-            set("F12", "TOPLAM", { fill: FillYellow });
-            setFormula("G12", `SUM(G4:G${bankaLastRow})`, { numFmt: CurrencyFmt });
-
-            // Gider toplamı
-            set("A19", "GİDER TOPLAMLARI", { fill: FillYellow });
-            setFormula("D19", `SUM(D6:D${giderLastRow},D18)`, {
-                numFmt: CurrencyFmt,
-            });
-
-            // Nakit kalan
-            set("A20", "NAKİT KALAN", { fill: FillYellow });
-            setFormula("C20", `C4-D19`, { numFmt: CurrencyFmt });
-
-            // Açık / Fazla & Sonsöz
-            set("A21", "KASA AÇIĞI YAZ :", { fill: FillYellow });
-            set("B21", toFloat(document.getElementById("kasaAcigi").value), {
-                numFmt: CurrencyFmt,
-            });
-            set("A22", "KASA FAZLA YAZ :", { fill: FillYellow });
-            set("B22", toFloat(document.getElementById("kasaFazla").value), {
-                numFmt: CurrencyFmt,
-            });
-
-            set("A23", "TOPLAM NAKİT KALAN PARA:", { fill: FillYellow });
-            setFormula("C23", `C20-B21+B22`, { numFmt: CurrencyFmt });
-
-            /* ---------- WS Ayarları ---------- */
-            const maxRow = Math.max(30, giderLastRow, bankaLastRow, rn);
-            ws["!ref"] = `A1:K${maxRow}`;
-            ws["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-                { s: { r: 0, c: 2 }, e: { r: 0, c: 3 } },
-                { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } },
-                { s: { r: 2, c: 5 }, e: { r: 2, c: 6 } },
-                { s: { r: 16, c: 0 }, e: { r: 16, c: 2 } },
-            ];
-            ws["!cols"] = [
-                { wch: 40 },
-                { wch: 18 },
-                { wch: 18 },
-                { wch: 18 },
-                { wch: 2 },
-                { wch: 18 },
-                { wch: 18 },
-                {},
-                {},
-                { wch: 40 },
-            ];
-
-            //  Hücreleri ata
-            Object.keys(data).forEach((k) => (ws[k] = data[k]));
-
-            XLSX.utils.book_append_sheet(wb, ws, "GÜNLÜK RAPOR");
-            XLSX.writeFile(
-                wb,
-                `KasaFoyu_${today.toISOString().slice(0, 10)}.xlsx`
-            );
-        }
-
-        // Başlangıç setup
-        window.onload = () => {
-            notEkle();
-            hesapla();
-        };
-    </script>
 </body>
 </html>
