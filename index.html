@@ -38,30 +38,30 @@
             <h2>Ana Veri Girişleri</h2>
             <div class="form-group">
                 <label for="genelCiro">GENEL TOPLAM FİŞ CİROSU (B4)</label>
-                <input type="number" id="genelCiro" placeholder="200162.31" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="genelCiro" placeholder="200162,31" oninput="hesapla()">
             </div>
             <div class="form-group">
                 <label for="tebbankasi">TEBBANKASI (G4)</label>
-                <input type="number" id="tebbankasi" placeholder="152638.59" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="tebbankasi" placeholder="152638,59" oninput="hesapla()">
             </div>
              <div class="form-group">
                 <label for="fisSayisi">FİŞ SAYISI (G14)</label>
-                <input type="number" id="fisSayisi" placeholder="572.00" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="fisSayisi" placeholder="572" oninput="hesapla()">
             </div>
             <div class="form-group">
                 <label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI (D18)</label>
-                <input type="number" id="giderPusulasi" placeholder="226.47" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="giderPusulasi" placeholder="226,47" oninput="hesapla()">
             </div>
              <div class="form-group">
                 <label for="kasaAcigi">KASA AÇIĞI YAZ (B21)</label>
-                <input type="number" id="kasaAcigi" placeholder="0" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()">
             </div>
             <div class="form-group">
                 <label for="kasaFazla">KASA FAZLA YAZ (B22)</label>
-                <input type="number" id="kasaFazla" placeholder="2.75" oninput="hesapla()">
+                <input type="text" inputmode="decimal" id="kasaFazla" placeholder="2,75" oninput="hesapla()">
             </div>
             <div class="total-display">
-                TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0.00</span>
+                TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span>
             </div>
         </div>
 
@@ -81,19 +81,19 @@
             <div id="toptan-satis-list" class="dynamic-list">
                  <div class="item">
                     <input type="text" value="SODEXO" readonly>
-                    <input type="number" placeholder="Değer Girin" oninput="hesapla()">
+                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
                 </div>
                  <div class="item">
                     <input type="text" value="SETCARD" readonly>
-                    <input type="number" placeholder="Değer Girin" oninput="hesapla()">
+                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
                 </div>
                  <div class="item">
                     <input type="text" value="TOKEN" readonly>
-                    <input type="number" placeholder="Değer Girin" oninput="hesapla()">
+                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
                 </div>
                  <div class="item">
                     <input type="text" value="TICKET" readonly>
-                    <input type="number" placeholder="Değer Girin" oninput="hesapla()">
+                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
                 </div>
             </div>
             <button class="btn" onclick="toptanSatisEkle()">Yeni Toptan Satış Ekle</button>
@@ -116,14 +116,18 @@
 
     function getFloat(id) {
         const value = document.getElementById(id).value;
-        return parseFloat(value) || 0;
+        // Virgülü noktaya çevirerek ondalık sayıya dönüştürmeye hazır hale getir
+        const sanitizedValue = value.replace(',', '.');
+        return parseFloat(sanitizedValue) || 0;
     }
 
     function getDynamicListTotal(listId) {
         let total = 0;
-        const items = document.querySelectorAll(`#${listId} .item input[type='number']`);
+        const items = document.querySelectorAll(`#${listId} .item input:last-of-type`);
         items.forEach(item => {
-            total += parseFloat(item.value) || 0;
+            // Virgülü noktaya çevir
+            const sanitizedValue = item.value.replace(',', '.');
+            total += parseFloat(sanitizedValue) || 0;
         });
         return total;
     }
@@ -137,8 +141,6 @@
         const c4_nakitGiris = b4_genelCiro - d4_vizaGiris;
 
         // Giderler
-        // D19 = Giderlerin Toplamı (D7'den D18'e kadar)
-        // D6-D18 arası manuel girilecek giderler + D18 (Gider Pusulası)
         const giderlerToplami = getDynamicListTotal('giderler-list');
         const d18_giderPusulasi = getFloat('giderPusulasi');
         const d19_giderToplamlari = giderlerToplami + d18_giderPusulasi;
@@ -152,10 +154,11 @@
         // B23 = C20 - B21 + B22
         const b23_toplamNakitKalan = c20_nakitKalan - b21_kasaAcigi + b22_kasaFazla;
         
+        // Sonucu kullanıcıya yine virgüllü göstermek için noktayı virgüle çevir
         document.getElementById('toplamNakitKalan').textContent = b23_toplamNakitKalan.toFixed(2).replace('.', ',');
     }
 
-    function createDynamicItem(listId, removeFunction, keyPlaceholder, valuePlaceholder) {
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
@@ -165,7 +168,8 @@
         keyInput.placeholder = keyPlaceholder;
         
         const valueInput = document.createElement('input');
-        valueInput.type = 'number';
+        valueInput.type = 'text';
+        valueInput.inputMode = 'decimal'; // Mobil için sayısal klavye
         valueInput.placeholder = valuePlaceholder;
         valueInput.oninput = hesapla;
 
@@ -184,39 +188,23 @@
     }
     
     function giderEkle() {
-        createDynamicItem('giderler-list', 'giderSil', 'Gider Açıklaması', 'Tutar');
+        createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
     }
 
     function toptanSatisEkle() {
-        createDynamicItem('toptan-satis-list', 'toptanSatisSil', 'Firma Adı', 'Tutar');
+        createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
     }
 
     function indir() {
-        // Bu fonksiyon, girilen verileri toplayıp bir Excel dosyası oluşturur.
-        // Excel şablonuna benzer bir yapı kurulacak.
         const wb = XLSX.utils.book_new();
-        
         const tarih = document.getElementById('current-date').textContent;
         const genelCiro = getFloat('genelCiro');
-        const tebbankasi = getFloat('tebbankasi');
-        const nakitGiris = genelCiro - tebbankasi;
         
-        const data = [
-            ["GÜNLÜK KASA RAPORU", "", "TÜRKİŞ"],
-            ["FÖYDE SADECE BEYAZ OLAN KISIMLARI YAZINIZ", "TARİH:", tarih],
-            ["AÇIKLAMA", "GÜNSONU TOPLAM", "NAKİT GİRİŞ", "VİZA GİRİŞ", "", "BANKALAR"],
-            ["GENEL TOPLAM FİŞ CİROSU", genelCiro, nakitGiris, tebbankasi, "", "TEBBANKASI", tebbankasi],
-            // ... Diğer tüm alanları buraya ekleyerek Excel dosyasını oluşturabiliriz.
-            // Bu kısım oldukça detaylı olacağı için şimdilik temel bir örnek bırakıyorum.
-            // Tüm form alanlarını ve dinamik listeleri döngüye alıp hücrelere yerleştirmek gerekir.
-        ];
-
-        // Şimdilik sadece ana verileri içeren basit bir export
         const ws_data = [
             ["Alan", "Değer"],
             ["Tarih", tarih],
             ["Genel Toplam Fiş Cirosu", genelCiro],
-            ["Tebbankası", tebbankasi],
+            ["Tebbankası", getFloat('tebbankasi')],
             ["Gider Pusulası", getFloat('giderPusulasi')],
             ["Kasa Açığı", getFloat('kasaAcigi')],
             ["Kasa Fazlası", getFloat('kasaFazla')],
@@ -240,13 +228,9 @@
             ws_data.push([aciklama, tutar]);
         });
 
-
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         XLSX.utils.book_append_sheet(wb, ws, "Kasa Raporu");
-
-        XLSX.writeFile(wb, `Kasa Raporu - ${new Date().toLocaleDateString('tr-TR')}.xlsx`);
-
-        alert("Excel dosyası oluşturma fonksiyonu buraya entegre edilecek. Şu an temel verilerle bir dosya oluşturuluyor.");
+        XLSX.writeFile(wb, `Kasa Raporu - ${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
     // Başlangıçta 5 gider ve 4 toptan satış ekleyelim
