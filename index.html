@@ -19,7 +19,7 @@
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         .dynamic-list .item input:first-child { flex: 3; }
         .dynamic-list .item input:last-child { flex: 2; }
-        .dynamic-list .item.note-item input { flex: 1; } /* Tek inputlu notlar için */
+        .dynamic-list .item.note-item input { flex: 1; }
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; }
         .btn-danger { background-color: #d9534f; }
         .btn:hover { opacity: 0.9; }
@@ -37,42 +37,20 @@
         <!-- ANA GİRİŞLER BÖLÜMÜ -->
         <div class="section">
             <h2>Ana Veri Girişleri</h2>
-            <div class="form-group">
-                <label for="genelCiro">GENEL TOPLAM FİŞ CİROSU (B4)</label>
-                <input type="text" inputmode="decimal" id="genelCiro" placeholder="200162,31" oninput="hesapla()">
-            </div>
-            <div class="form-group">
-                <label for="tebbankasi">TEBBANKASI (G4)</label>
-                <input type="text" inputmode="decimal" id="tebbankasi" placeholder="152638,59" oninput="hesapla()">
-            </div>
-             <div class="form-group">
-                <label for="fisSayisi">FİŞ SAYISI (G14)</label>
-                <input type="text" inputmode="decimal" id="fisSayisi" placeholder="572" oninput="hesapla()">
-            </div>
-            <div class="form-group">
-                <label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI (D18)</label>
-                <input type="text" inputmode="decimal" id="giderPusulasi" placeholder="226,47" oninput="hesapla()">
-            </div>
-             <div class="form-group">
-                <label for="kasaAcigi">KASA AÇIĞI YAZ (B21)</label>
-                <input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()">
-            </div>
-            <div class="form-group">
-                <label for="kasaFazla">KASA FAZLA YAZ (B22)</label>
-                <input type="text" inputmode="decimal" id="kasaFazla" placeholder="2,75" oninput="hesapla()">
-            </div>
-            <div class="total-display">
-                TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span>
-            </div>
+            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" placeholder="Örn: 200162,31" oninput="hesapla()"></div>
+            <div class="form-group"><label for="tebbankasi">TEBBANKASI</label><input type="text" inputmode="decimal" id="tebbankasi" placeholder="Örn: 152638,59" oninput="hesapla()"></div>
+            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" placeholder="Örn: 572" oninput="hesapla()"></div>
+            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" placeholder="Örn: 226,47" oninput="hesapla()"></div>
+            <div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()"></div>
+            <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="0" oninput="hesapla()"></div>
+            <div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div>
         </div>
         
         <!-- GİDERLER BÖLÜMÜ -->
         <div class="section">
             <h2>Giderler</h2>
-            <p>Açıklama ve tutar girerek yeni giderler ekleyebilirsiniz.</p>
-            <div id="giderler-list" class="dynamic-list">
-                <!-- Dinamik giderler buraya eklenecek -->
-            </div>
+            <p>Açıklama ve tutar girin.</p>
+            <div id="giderler-list" class="dynamic-list"></div>
             <button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button>
         </div>
         
@@ -80,33 +58,19 @@
         <div class="section">
             <h2>Toptan Satış Bölümü</h2>
             <div id="toptan-satis-list" class="dynamic-list">
-                 <div class="item">
-                    <input type="text" value="SODEXO" readonly>
-                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
-                </div>
-                 <div class="item">
-                    <input type="text" value="SETCARD" readonly>
-                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
-                </div>
-                 <div class="item">
-                    <input type="text" value="TOKEN" readonly>
-                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
-                </div>
-                 <div class="item">
-                    <input type="text" value="TICKET" readonly>
-                    <input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()">
-                </div>
+                 <div class="item"><input type="text" value="SODEXO" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
+                 <div class="item"><input type="text" value="SETCARD" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
+                 <div class="item"><input type="text" value="TOKEN" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
+                 <div class="item"><input type="text" value="TICKET" readonly><input type="text" inputmode="decimal" placeholder="Değer Girin" oninput="hesapla()"></div>
             </div>
             <button class="btn" onclick="toptanSatisEkle()">Yeni Toptan Satış Ekle</button>
         </div>
 
-        <!-- NOTLAR BÖLÜMÜ (YENİ YERİ) -->
+        <!-- NOTLAR BÖLÜMÜ -->
         <div class="section">
             <h2>Notlar</h2>
-            <p>Günün önemli notlarını buraya ekleyebilirsiniz.</p>
-            <div id="notlar-list" class="dynamic-list">
-                <!-- Dinamik notlar buraya eklenecek -->
-            </div>
+            <p>Günün önemli notlarını ekleyin.</p>
+            <div id="notlar-list" class="dynamic-list"></div>
             <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
         </div>
     </div>
@@ -116,71 +80,50 @@
     </div>
 </div>
 
-<!-- Kütüphane -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
-    // Tarihi ayarla
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('tr-TR', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+    const tarihObjesi = new Date();
+    document.getElementById('current-date').textContent = tarihObjesi.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    function getFloat(id) {
-        const value = document.getElementById(id).value;
-        const sanitizedValue = value.replace(',', '.');
-        return parseFloat(sanitizedValue) || 0;
+    function getFloat(elementId) {
+        const value = document.getElementById(elementId).value.replace(',', '.');
+        return parseFloat(value) || 0;
     }
 
     function getDynamicListTotal(listId) {
         let total = 0;
-        const items = document.querySelectorAll(`#${listId} .item input:last-of-type`);
-        items.forEach(item => {
-            const sanitizedValue = item.value.replace(',', '.');
-            total += parseFloat(sanitizedValue) || 0;
+        document.querySelectorAll(`#${listId} .item input:last-of-type`).forEach(item => {
+            total += (parseFloat(item.value.replace(',', '.')) || 0);
         });
         return total;
     }
 
     function hesapla() {
-        const b4_genelCiro = getFloat('genelCiro');
-        const d4_vizaGiris = getFloat('tebbankasi');
-        const c4_nakitGiris = b4_genelCiro - d4_vizaGiris;
-        const giderlerToplami = getDynamicListTotal('giderler-list');
-        const d18_giderPusulasi = getFloat('giderPusulasi');
-        const d19_giderToplamlari = giderlerToplami + d18_giderPusulasi;
+        const c4_nakitGiris = getFloat('genelCiro') - getFloat('tebbankasi');
+        const d19_giderToplamlari = getDynamicListTotal('giderler-list') + getFloat('giderPusulasi');
         const c20_nakitKalan = c4_nakitGiris - d19_giderToplamlari;
-        const b21_kasaAcigi = getFloat('kasaAcigi');
-        const b22_kasaFazla = getFloat('kasaFazla');
-        const b23_toplamNakitKalan = c20_nakitKalan - b21_kasaAcigi + b22_kasaFazla;
+        const b23_toplamNakitKalan = c20_nakitKalan - getFloat('kasaAcigi') + getFloat('kasaFazla');
         document.getElementById('toplamNakitKalan').textContent = b23_toplamNakitKalan.toFixed(2).replace('.', ',');
     }
 
-    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder) {
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, isKeyReadonly = false) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
-        
         const keyInput = document.createElement('input');
         keyInput.type = 'text';
         keyInput.placeholder = keyPlaceholder;
-        
+        if(isKeyReadonly) keyInput.readOnly = true;
         const valueInput = document.createElement('input');
         valueInput.type = 'text';
         valueInput.inputMode = 'decimal';
         valueInput.placeholder = valuePlaceholder;
         valueInput.oninput = hesapla;
-
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Sil';
         removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = function() {
-            item.remove();
-            hesapla();
-        };
-
-        item.appendChild(keyInput);
-        item.appendChild(valueInput);
-        item.appendChild(removeBtn);
+        removeBtn.onclick = () => { item.remove(); hesapla(); };
+        item.append(keyInput, valueInput, removeBtn);
         list.appendChild(item);
     }
     
@@ -188,85 +131,97 @@
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item note-item';
-        
         const noteInput = document.createElement('input');
         noteInput.type = 'text';
         noteInput.placeholder = placeholder;
-        
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Sil';
         removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = function() { item.remove(); };
-
-        item.appendChild(noteInput);
-        item.appendChild(removeBtn);
+        removeBtn.onclick = () => item.remove();
+        item.append(noteInput, removeBtn);
         list.appendChild(item);
     }
 
-    function notEkle() {
-        createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
-    }
-    
-    function giderEkle() {
-        createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
-    }
+    const notEkle = () => createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
+    const giderEkle = () => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
+    const toptanSatisEkle = () => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
 
-    function toptanSatisEkle() {
-        createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
-    }
+    async function indir() {
+        const sablonDosyaAdi = 'Kasa_Sablon.xlsx'; // GitHub'a yüklediğiniz şablon dosyasının adı
+        try {
+            // 1. Şablon dosyasını fetch ile al
+            const response = await fetch(sablonDosyaAdi);
+            const arrayBuffer = await response.arrayBuffer();
+            const data = new Uint8Array(arrayBuffer);
+            const workbook = XLSX.read(data, {type: 'array'});
 
-    function indir() {
-        const wb = XLSX.utils.book_new();
-        const tarih = document.getElementById('current-date').textContent;
-        
-        const ws_data = [
-            ["Alan", "Değer"],
-            ["Tarih", tarih],
-            ["Genel Toplam Fiş Cirosu", document.getElementById('genelCiro').value],
-            ["Tebbankası", document.getElementById('tebbankasi').value],
-            ["Gider Pusulası", document.getElementById('giderPusulasi').value],
-            ["Kasa Açığı", document.getElementById('kasaAcigi').value],
-            ["Kasa Fazlası", document.getElementById('kasaFazla').value],
-            ["Hesaplanan Toplam Nakit Kalan", document.getElementById('toplamNakitKalan').textContent],
-            [],
-            ["Giderler", "Tutar"],
-        ];
+            // 2. İlk çalışma sayfasını seç
+            const worksheetName = workbook.SheetNames[0];
+            const ws = workbook.Sheets[worksheetName];
 
-        document.querySelectorAll('#giderler-list .item').forEach(item => {
-            const aciklama = item.children[0].value;
-            const tutar = item.children[1].value;
-            ws_data.push([aciklama, tutar]);
-        });
-        
-        ws_data.push([]);
-        ws_data.push(["Toptan Satışlar", "Tutar"]);
-        
-         document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
-            const aciklama = item.children[0].value;
-            const tutar = item.children[1].value;
-            ws_data.push([aciklama, tutar]);
-        });
+            // 3. Web formundaki verileri alıp doğru hücrelere yaz
+            ws['C2'] = { t: 's', v: document.getElementById('current-date').textContent }; // Tarih
+            ws['B4'].v = getFloat('genelCiro');      // Genel Toplam Fiş Cirosu
+            ws['G4'].v = getFloat('tebbankasi');     // TEBBANKASI
+            ws['G14'].v = getFloat('fisSayisi');     // Fiş Sayısı
+            ws['D18'].v = getFloat('giderPusulasi'); // Gider Pusulası
+            ws['B21'].v = getFloat('kasaAcigi');     // Kasa Açığı
+            ws['B22'].v = getFloat('kasaFazla');     // Kasa Fazlası
+            
+            // Dinamik Giderleri yaz
+            let giderSatiri = 7; // Giderler D7 hücresinden başlasın (index 6)
+            document.querySelectorAll('#giderler-list .item').forEach(item => {
+                const aciklama = item.children[0].value;
+                const tutar = parseFloat(item.children[1].value.replace(',', '.')) || 0;
+                ws[`A${giderSatiri}`] = { t: 's', v: aciklama };
+                ws[`D${giderSatiri}`] = { t: 'n', v: tutar };
+                giderSatiri++;
+            });
 
-        ws_data.push([]);
-        ws_data.push(["Notlar"]);
+            // Dinamik Toptan Satışları yaz
+            let toptanSatisSatiri = 9; // Toptan satışlar Q9'dan başlasın (örnek)
+             document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
+                const aciklama = item.children[0].value;
+                const tutar = parseFloat(item.children[1].value.replace(',', '.')) || 0;
+                ws[`Q${toptanSatisSatiri}`] = { t: 's', v: aciklama };
+                ws[`S${toptanSatisSatiri}`] = { t: 'n', v: tutar };
+                toptanSatisSatiri++;
+            });
 
-        document.querySelectorAll('#notlar-list .item input').forEach(item => {
-            ws_data.push([item.value]);
-        });
+            // Dinamik Notları yaz
+            let notSatiri = 4; // Notlar J4'ten başlasın (örnek)
+            document.querySelectorAll('#notlar-list .item input').forEach(input => {
+                ws[`J${notSatiri}`] = { t: 's', v: input.value };
+                notSatiri++;
+            });
 
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        XLSX.utils.book_append_sheet(wb, ws, "Kasa Raporu");
-        XLSX.writeFile(wb, `Kasa Raporu - ${new Date().toISOString().slice(0,10)}.xlsx`);
+            // Excel formüllerinin yeniden hesaplanmasını tetikle (isteğe bağlı ama önerilir)
+            // ws['C4'].f = 'B4-D4'; // Örnek formül
+            // Bu kısım, şablonda formüller zaten varsa genellikle gereksizdir.
+            
+            // 4. İçi doldurulmuş yeni dosyayı oluştur ve indir
+            const newArrayBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([newArrayBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Kasa Raporu - ${tarihObjesi.toISOString().slice(0,10)}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Hata:", error);
+            alert(`Şablon dosyası ('${sablonDosyaAdi}') yüklenemedi. Lütfen dosyanın doğru isimle GitHub projenizde olduğundan emin olun.`);
+        }
     }
 
     // Sayfa yüklendiğinde varsayılan elemanları oluştur
-    window.onload = function() {
-        notEkle(); // Varsayılan olarak bir not alanı ekle
-        for(let i=0; i<5; i++) giderEkle();
+    window.onload = () => {
+        notEkle();
+        for(let i=0; i<2; i++) giderEkle(); // Başlangıçta 2 gider alanı
         hesapla();
     };
 
 </script>
-
 </body>
 </html>
