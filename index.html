@@ -24,27 +24,26 @@
         .btn-danger { background-color: #d9534f; }
         .btn:hover { opacity: 0.9; }
         .footer-controls { text-align: center; margin-top: 30px; }
-        /* Yeni buton stili */
-        .copy-btn { background-color: #007bff; font-size: 1.2em; padding: 15px 25px; }
+        .download-btn { background-color: #007bff; font-size: 1.2em; padding: 15px 25px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>GÜNLÜK KASA RAPORU</h1>
-    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butona basın ve Excel'deki boş şablonunuzda A1 hücresine yapıştırın (`Ctrl+V`).</p>
+    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butona basarak Excel dosyasını indirebilirsiniz.</p>
     <p><strong>Tarih:</strong> <span id="current-date"></span></p>
 
     <div class="grid-container">
         <!-- ANA GİRİŞLER BÖLÜMÜ -->
         <div class="section">
             <h2>Ana Veri Girişleri</h2>
-            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" placeholder="200162,31" oninput="hesapla()"></div>
-            <div class="form-group"><label for="tebbankasi">VİZA GİRİŞ (TEBBANKASI vb. Toplamı)</label><input type="text" inputmode="decimal" id="tebbankasi" placeholder="152638,59" oninput="hesapla()"></div>
-            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" placeholder="572" oninput="hesapla()"></div>
-            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" placeholder="226,47" oninput="hesapla()"></div>
-            <div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" placeholder="0" oninput="hesapla()"></div>
-            <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="2,75" oninput="hesapla()"></div>
+            <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" placeholder="Örn: 168227,00" oninput="hesapla()"></div>
+            <div class="form-group"><label for="vizaGiris">VİZA GİRİŞ (TEBBANKASI vb. Toplamı)</label><input type="text" inputmode="decimal" id="vizaGiris" placeholder="Örn: 120802,13" oninput="hesapla()"></div>
+            <div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" placeholder="Örn: 470" oninput="hesapla()"></div>
+            <div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMI</label><input type="text" inputmode="decimal" id="giderPusulasi" placeholder="Örn: 149,80" oninput="hesapla()"></div>
+            <div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" placeholder="Örn: 0,07" oninput="hesapla()"></div>
+            <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="Örn: 0" oninput="hesapla()"></div>
             <div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div>
         </div>
         
@@ -78,17 +77,23 @@
     </div>
 
     <div class="footer-controls">
-        <button class="btn copy-btn" onclick="copyDataForExcel()">Excel İçin Verileri Panoya Kopyala</button>
+        <button class="btn download-btn" onclick="downloadExcelFile()">Excel Dosyasını İndir</button>
     </div>
 </div>
 
 <script>
-    const tarihYazisi = new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const tarih = new Date();
+    const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
     document.getElementById('current-date').textContent = tarihYazisi;
+
+    function formatNum(num) {
+        if (isNaN(num)) return "0,00";
+        return num.toFixed(2).replace('.', ',');
+    }
 
     function getFloat(id) {
         const value = document.getElementById(id).value;
-        const sanitizedValue = value.replace(',', '.');
+        const sanitizedValue = value.replace(/\./g, '').replace(',', '.'); // Binlik ayıracını kaldır, ondalığı noktaya çevir
         return parseFloat(sanitizedValue) || 0;
     }
 
@@ -96,36 +101,40 @@
         let total = 0;
         const items = document.querySelectorAll(`#${listId} .item input:last-of-type`);
         items.forEach(item => {
-            total += (parseFloat(item.value.replace(',', '.')) || 0);
+            const value = item.value.replace(/\./g, '').replace(',', '.');
+            total += (parseFloat(value) || 0);
         });
         return total;
     }
 
     function hesapla() {
-        const b4_genelCiro = getFloat('genelCiro');
-        const d4_vizaGiris = getFloat('tebbankasi');
-        const c4_nakitGiris = b4_genelCiro - d4_vizaGiris;
+        const genelCiro = getFloat('genelCiro');
+        const vizaGiris = getFloat('vizaGiris');
+        const nakitGiris = genelCiro - vizaGiris;
+        
         const giderlerToplami = getDynamicListTotal('giderler-list');
-        const d18_giderPusulasi = getFloat('giderPusulasi');
-        const d19_giderToplamlari = giderlerToplami + d18_giderPusulasi;
-        const c20_nakitKalan = c4_nakitGiris - d19_giderToplamlari;
-        const b21_kasaAcigi = getFloat('kasaAcigi');
-        const b22_kasaFazla = getFloat('kasaFazla');
-        const b23_toplamNakitKalan = c20_nakitKalan - b21_kasaAcigi + b22_kasaFazla;
-        document.getElementById('toplamNakitKalan').textContent = b23_toplamNakitKalan.toFixed(2).replace('.', ',');
+        const giderPusulasi = getFloat('giderPusulasi');
+        const toplamGiderler = giderlerToplami + giderPusulasi;
+
+        const nakitKalan = nakitGiris - toplamGiderler;
+        const kasaAcigi = getFloat('kasaAcigi');
+        const kasaFazla = getFloat('kasaFazla');
+        const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
+
+        document.getElementById('toplamNakitKalan').textContent = formatNum(toplamNakitKalan);
     }
     
-    // --- BURADAN AŞAĞISI DEĞİŞMEDİ ---
-    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder) {
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, isReadonly = false) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
-        const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder;
+        const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder; if (isReadonly) keyInput.readOnly = true;
         const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = valuePlaceholder; valueInput.oninput = hesapla;
         const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
         removeBtn.onclick = function() { item.remove(); hesapla(); };
         item.appendChild(keyInput); item.appendChild(valueInput); item.appendChild(removeBtn);
         list.appendChild(item);
+        return item;
     }
     
     function createNoteItem(listId, placeholder) {
@@ -141,19 +150,11 @@
     const notEkle = () => createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
     const giderEkle = () => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
     const toptanSatisEkle = () => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
-    // --- YUKARISI DEĞİŞMEDİ ---
 
-    // --- YENİ KOPYALAMA FONKSİYONU ---
-    function copyDataForExcel() {
-        const grid = Array(50).fill(null).map(() => Array(20).fill(''));
-        
-        function formatNum(num) {
-            return num.toFixed(2).replace('.', ',');
-        }
-
-        // --- Verileri Hesapla ve Grid'e yerleştir ---
+    function downloadExcelFile() {
+        // 1. Verileri topla ve hesapla
         const genelCiro = getFloat('genelCiro');
-        const vizaGiris = getFloat('tebbankasi');
+        const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
         const giderPusulasi = getFloat('giderPusulasi');
         const digerGiderler = getDynamicListTotal('giderler-list');
@@ -162,53 +163,99 @@
         const kasaAcigi = getFloat('kasaAcigi');
         const kasaFazla = getFloat('kasaFazla');
         const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
+        const fisSayisi = getFloat('fisSayisi');
 
-        grid[1][2] = tarihYazisi;                 // C2: Tarih
-        grid[3][1] = formatNum(genelCiro);        // B4: GÜNSONU TOPLAM
-        grid[3][2] = formatNum(nakitGiris);       // C4: NAKİT GİRİŞ
-        grid[3][3] = formatNum(vizaGiris);        // D4: VİZA GİRİŞ
-        grid[3][6] = formatNum(vizaGiris);        // G4: TEBBANKASI (Viza Giriş ile aynı kabul edildi)
+        // 2. Excel Şablonunu 2 boyutlu dizi olarak oluştur
+        // Orijinal dosyanızdaki tüm satırları ve virgülleri tam olarak yansıtır
+        let grid = [
+            ["GÜNLÜK KASA RAPORU",,, "TÜRKİŞ", "SARI ALANA YAZMA ",,,,,,,,,,,],
+            ['"FÖYDE SADECE BEYAZ OLAN\nKISIMLARI YAZINIZ "', "TARİH :", "",, "BANKALAR ",,,,, "NOTLAR",,,,,,,,],
+            ["AÇIKLAMA", "GÜNSONU TOPLAM ", "NAKİT GİRİŞ", "VİZA GİRİŞ",,,,, "1", "",,,,,,,,,],
+            ["GENEL TOPLAM FİŞ CİROSU", "", "", "", "TEBBANKASI",, "",,, "2", "",,,,,,,,,],
+            [,,,, "ZİRAAT BANKASI",,,,, "3",,,,,,,,,],
+            ["",,, "", "FİNANSBANK",,,,,,,,,,,,,,],
+            ["",,, "", "HALKBANK",,,,, "TOPTAN SATIŞ BÖLÜMÜ",,,,,,,],
+            ["",,, "", "SODEXO",,,,, "1",,,,,,,,,],
+            [,,,, "SET CARD",,,,, "2",,,,,,,,,],
+            [,,,, "TOKEN FLEX",,,,, "3",,,,,,,,,],
+            [,,,, "TİCKET",,,,,,,,,,,,,,],
+            [,,,, "TOPLAM ",, "",,, "4",,,,,,,,,],
+            [,,,, "FİS SAYISI",, "",,, "5", "",,,,,,, "",,],
+            [,,,, "Z SONU İNDİRİM",,,,, "6", "",,,,,,, "",,],
+            [,,,, "SEHER TONGAL",,,,, "7", "",,,,,,,],
+            [,,,, "HASAN ATİLA",,,,, "8", "",,,,,,, "",,],
+            [,,,,,,,, "9",,,,,,,,,],
+            ["GİDER PUSULASININ TOPLAM RAKAMINI YAZINIZ",,, "",,,,,, "10",,,,,,,,,],
+            ["GİDER TOPLAMLARI",,, "",,,,,, "11",,,,,,,,,],
+            ["NAKİT KALAN",, "",,,,,,, "12",,,,,,,,,],
+            ["KASA AÇIĞI YAZ :", "",,,,,,,, "13",,,,,,,,,],
+            ["KASA FAZLA YAZ :", "",,,,,,,, "14",,,,,,,,,],
+            ["TOPLAM NAKİT KALAN PARA:", "",,,,,,,, "TOPLAM",,,,,,,,,]
+        ];
+
+        // 3. Hesaplanan verileri şablona (grid'e) yerleştir
+        grid[1][2] = tarihYazisi;
+        grid[3][1] = formatNum(genelCiro);
+        grid[3][2] = formatNum(nakitGiris);
+        grid[3][3] = formatNum(vizaGiris);
+        grid[3][6] = formatNum(vizaGiris); // TEBBANKASI
+        grid[11][6] = formatNum(vizaGiris); // BANKALAR TOPLAM
         
         // Giderler
-        let giderRow = 5; // A6'dan başlar
+        let giderRow = 5;
         document.querySelectorAll('#giderler-list .item').forEach(item => {
-            grid[giderRow][0] = item.children[0].value;
-            grid[giderRow][3] = formatNum(parseFloat(item.children[1].value.replace('.', '.')) || 0);
-            giderRow++;
+            if (giderRow < 17) { // Giderler için ayrılan alanı aşmamak için kontrol
+                grid[giderRow][0] = item.children[0].value;
+                grid[giderRow][3] = formatNum(parseFloat(item.children[1].value.replace(/\./g, '').replace(',', '.')) || 0);
+                giderRow++;
+            }
         });
 
         // Toptan Satış
-        let satisRow = 7; // F8'den başlar
+        let toptanSatisRow = 7;
         document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
-             grid[satisRow][5] = item.children[0].value;
-             grid[satisRow][6] = formatNum(parseFloat(item.children[1].value.replace(',', '.')) || 0);
-             satisRow++;
+            if (toptanSatisRow < 16) {
+                grid[toptanSatisRow][10] = item.children[0].value;
+                grid[toptanSatisRow][15] = formatNum(parseFloat(item.children[1].value.replace(/\./g, '').replace(',', '.')) || 0);
+                toptanSatisRow++;
+            }
         });
 
         // Notlar
-        let notRow = 3; // J4'ten başlar
+        let notRow = 2;
         document.querySelectorAll('#notlar-list .item input').forEach(input => {
-            grid[notRow][9] = input.value;
-            notRow++;
+            if (notRow < 17) {
+                 grid[notRow][9] = input.value;
+                 notRow++;
+            }
         });
 
-        // Alt Kısım
-        grid[12][6] = formatNum(getFloat('fisSayisi')); // G13 (Fiş Sayısı) - Not: Excel'inizde G14 ise bu satırı grid[13][6] yapın.
-        grid[17][3] = formatNum(giderPusulasi);       // D18
-        grid[18][3] = formatNum(toplamGider);         // D19
-        grid[19][2] = formatNum(nakitKalan);          // C20
-        grid[20][1] = formatNum(kasaAcigi);           // B21
-        grid[21][1] = formatNum(kasaFazla);           // B22
-        grid[22][2] = formatNum(toplamNakitKalan);    // C23 (TOPLAM NAKİT KALAN PARA)
+        grid[12][6] = fisSayisi.toString(); // Fiş Sayısı
+        grid[17][3] = formatNum(giderPusulasi);
+        grid[18][3] = formatNum(toplamGider);
+        grid[19][2] = formatNum(nakitKalan);
+        grid[20][1] = formatNum(kasaAcigi);
+        grid[21][1] = formatNum(kasaFazla);
+        grid[22][1] = formatNum(toplamNakitKalan);
 
-        // --- Grid'i Kopyalanacak Metne Dönüştür ---
-        const tsvText = grid.map(row => row.join('\t')).join('\n');
-        
-        navigator.clipboard.writeText(tsvText).then(() => {
-            alert('Veri panoya kopyalandı! Şimdi Excel\'e gidip A1 hücresine yapıştırabilirsiniz.');
-        }, (err) => {
-            alert('Hata: Veri kopyalanamadı. Hata: ' + err);
-        });
+        // 4. Grid'i CSV formatında metne dönüştür
+        // Excel'in Türkçe karakterleri doğru açması için BOM (Byte Order Mark) ekliyoruz.
+        const csvContent = '\uFEFF' + grid.map(row => row.join(",")).join("\n");
+
+        // 5. Dosyayı oluştur ve indirmeyi tetikle
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            const dateForFilename = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+            link.setAttribute("href", url);
+            link.setAttribute("download", `KASA_RAPORU_${dateForFilename}.xls`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
     }
 
     // Sayfa yüklendiğinde varsayılan elemanları oluştur
