@@ -87,36 +87,28 @@
         if (!valueStr) return 0;
         return parseFloat(valueStr.replace(/\./g, '').replace(',', '.')) || 0;
     }
-
-    // --- Fonksiyonlarda Değişiklikler ---
     
     function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, initialKey = '', isNewToptan = false) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
-
         const keyInput = document.createElement('input');
         keyInput.type = 'text';
         keyInput.placeholder = keyPlaceholder;
         keyInput.value = initialKey;
-
         const valueInput = document.createElement('input');
         valueInput.type = 'text';
         valueInput.inputMode = 'decimal';
         valueInput.placeholder = valuePlaceholder;
         valueInput.oninput = hesapla;
-
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Sil';
         removeBtn.className = 'btn btn-danger';
         removeBtn.onclick = function() { item.remove(); hesapla(); };
-        
         item.appendChild(keyInput);
         item.appendChild(valueInput);
         item.appendChild(removeBtn);
-
         if (isNewToptan) {
-            // Yeni toptan satışı listenin en başına ekle (sabitlerin üstüne)
             list.insertBefore(item, list.firstChild);
         } else {
             list.appendChild(item);
@@ -128,18 +120,14 @@
     const giderEkle = (initialKey = '') => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar', initialKey);
     const toptanSatisEkle = () => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar', '', true);
 
-    // --- Hesaplama ve Veri İndirme ---
-
     function hesapla() {
         const genelCiro = getFloat('genelCiro');
         const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
-        
         let giderlerToplami = 0;
         document.querySelectorAll('#giderler-list .item').forEach(item => {
             giderlerToplami += getFloatFromValue(item.children[1].value);
         });
-
         const giderPusulasi = getFloat('giderPusulasi');
         const toplamGiderler = giderlerToplami + giderPusulasi;
         const nakitKalan = nakitGiris - toplamGiderler;
@@ -153,12 +141,12 @@
         notEkle();
         giderEkle('EKMEK ÖDEMESİ');
         giderEkle('PERSONEL EKMEK');
-        giderEkle(); // Boş bir gider satırı ekle
+        giderEkle();
         hesapla();
     };
 
+    // --- GÜNCELLENMİŞ VERİ İNDİRME FONKSİYONU ---
     function downloadDataFile() {
-        // GİDERLER: Sadece dolu ve 0'dan büyük olanları al
         const digerGiderler = [];
         document.querySelectorAll('#giderler-list .item').forEach(item => {
             const aciklama = item.children[0].value.trim();
@@ -168,24 +156,20 @@
             }
         });
 
-        // TOPTAN SATIŞLAR: Yeni eklenenler ve sabit olanlar olarak ayır
         const toptanSatislar = [];
         document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
              const aciklama = item.children[0].value.trim();
              const tutar = getFloatFromValue(item.children[1].value);
-             // Yeni eklenenler için açıklama boş olmamalı, sabitler her zaman eklenir
              if ( (item.classList.contains('fixed-item')) || (!item.classList.contains('fixed-item') && aciklama) ) {
                 toptanSatislar.push({ aciklama, tutar });
              }
         });
 
-        // NOTLAR: Sadece dolu olanları al
         const notlar = [];
         document.querySelectorAll('#notlar-list .item input').forEach(input => {
             if (input.value.trim()) notlar.push(input.value.trim());
         });
         
-        // Final hesaplamaları yap
         const genelCiro = getFloat('genelCiro');
         const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
@@ -194,7 +178,7 @@
         const nakitKalan = nakitGiris - toplamGider;
         const kasaAcigi = getFloat('kasaAcigi');
         const kasaFazla = getFloat('kasaFazla');
-        const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
+        // TOPLAM NAKİT KALAN ARTIK HESAPLANIYOR AMA DOSYAYA EKLENMİYOR
 
         const data = {
             tarih: tarihYazisi,
@@ -202,7 +186,8 @@
             fisSayisi: getFloat('fisSayisi'),
             giderPusulasi, digerGiderler, toptanSatislar, notlar,
             giderToplamlari: toplamGider,
-            nakitKalan, kasaAcigi, kasaFazla, toplamNakitKalan,
+            nakitKalan, kasaAcigi, kasaFazla
+            // 'toplamNakitKalan' buradan kaldırıldı.
         };
 
         const jsonData = JSON.stringify(data, null, 2);
