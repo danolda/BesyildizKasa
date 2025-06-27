@@ -11,6 +11,9 @@
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px; }
         .section { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
         .section h2 { font-size: 1.2em; color: #5bc0de; margin-top: 0; }
+        .instructions { margin-bottom: 25px; background-color: #eef7ff; padding: 15px; border-radius: 5px; border-left: 5px solid #007bff; }
+        .instructions ol { padding-left: 20px; margin: 5px 0 0 0; }
+        .instructions li { margin-bottom: 5px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
@@ -25,23 +28,34 @@
         .btn:hover { opacity: 0.9; }
         .controls-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .download-btn { background-color: #007bff; font-size: 1.2em; padding: 15px 25px; }
+        footer { text-align: center; margin-top: 30px; padding: 15px 0; font-size: 0.8em; color: #777; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Günlük Kasa Veri Girişi</h1>
-    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butonları kullanabilirsiniz.</p>
+    
+    <!-- GÜNCELLENMİŞ TALİMATLAR -->
+    <div class="instructions">
+        <strong>İş Akışı Talimatları:</strong>
+        <ol>
+            <li>Formu doldurduktan sonra "Veri Dosyasını İndir" butonu ile dosyayı bilgisayarınıza kaydedin.</li>
+            <li>İndirilen dosyayı WhatsApp üzerinden ilgili kişiye gönderin.</li>
+            <li>Son olarak, Google E-Tablolar'daki "KASA İŞLEMLERİ" menüsünü kullanarak verileri içeri aktarın.</li>
+        </ol>
+    </div>
+
     <p><strong>Tarih:</strong> <span id="current-date"></span></p>
 
-    <!-- KONTROL BUTONLARI ARTIK BURADA -->
     <div class="controls-container">
         <button class="btn btn-save" onclick="saveDataToLocal()">Verileri Kaydet (Sayfa Yenilemeye Karşı)</button>
-        <button class="btn download-btn" onclick="downloadDataFile()">Veri Dosyasını (.json) İndir</button>
+        <!-- GÜNCELLENMİŞ BUTON METNİ -->
+        <button class="btn download-btn" onclick="downloadDataFile()">Veri Dosyasını İndir</button>
         <button class="btn btn-danger" onclick="resetData()">Formu Sıfırla (Kayıtlı Verileri Siler)</button>
     </div>
 
-    <!-- FORM ALANLARI -->
+    <!-- FORM ALANLARI (DEĞİŞİKLİK YOK) -->
     <div class="grid-container">
         <div class="section"><h2>Ana Veri Girişleri</h2><div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" oninput="hesapla()"></div><div class="form-group"><label for="vizaGiris">TEBBANKASI</label><input type="text" inputmode="decimal" id="vizaGiris" oninput="hesapla()"></div><div class="form-group"><label for="fisSayisi">FİŞ SAYISI</label><input type="text" inputmode="decimal" id="fisSayisi" oninput="hesapla()"></div><div class="form-group"><label for="giderPusulasi">GİDER PUSULASI TOPLAM RAKAMINI YAZINIZ</label><input type="text" inputmode="decimal" id="giderPusulasi" oninput="hesapla()"></div><div class="form-group"><label for="kasaAcigi">KASA AÇIĞI YAZ</label><input type="text" inputmode="decimal" id="kasaAcigi" oninput="hesapla()"></div><div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" oninput="hesapla()"></div><div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div></div>
         <div class="section"><h2>Giderler</h2><div id="giderler-list" class="dynamic-list"></div><button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button></div>
@@ -51,9 +65,13 @@
     </div>
 </div>
 
+<!-- YENİ FOOTER -->
+<footer>
+    © Copyright 2025 by Melih Emre Karaköse. All Rights Reserved.
+</footer>
+
 <script>
-    // SCRIPT BÖLÜMÜNÜN İÇERİĞİ ÖNCEKİYLE BİREBİR AYNI OLDUĞU İÇİN BURADA YER KAPLAMAMASI ADINA KISALTILMIŞTIR.
-    // LÜTFEN BİR ÖNCEKİ MESAJDAKİ SCRIPT BLOĞUNUN TAMAMINI KULLANIN.
+    // SCRIPT BÖLÜMÜNÜN İÇERİĞİ ÖNCEKİYLE BİREBİR AYNIDIR.
     const tarih = new Date();
     const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
     document.getElementById('current-date').textContent = tarihYazisi;
@@ -66,13 +84,10 @@
     const giderEkle = (key = '', val = '') => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar', key, val);
     const toptanSatisEkle = (key = '', val = '') => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar', key, val, true);
     function hesapla() { const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; let giderlerToplami = 0; document.querySelectorAll('#giderler-list .item').forEach(item => { giderlerToplami += getFloatFromValue(item.children[1].value); }); const giderPusulasi = getFloat('giderPusulasi'); const toplamGiderler = giderlerToplami + giderPusulasi; const nakitKalan = nakitGiris - toplamGiderler; const kasaAcigi = getFloat('kasaAcigi'); const kasaFazla = getFloat('kasaFazla'); const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla; document.getElementById('toplamNakitKalan').textContent = (toplamNakitKalan.toFixed(2).replace('.', ',')); }
-
     const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri';
-
     function saveDataToLocal() { const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] }; ['genelCiro', 'vizaGiris', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; }); document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#toptan-satis-list .item').forEach(item => dataToSave.toptanSatislar.push({ key: item.children[0].value, val: item.children[1].value, isFixed: item.classList.contains('fixed-item') })); document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value)); dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value]; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave)); alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!'); }
     function loadDataFromLocal() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (!savedData) return; const data = JSON.parse(savedData); document.getElementById('giderler-list').innerHTML = ''; document.getElementById('toptan-satis-list').innerHTML = ''; document.getElementById('notlar-list').innerHTML = ''; Object.keys(data.main).forEach(id => { document.getElementById(id).value = data.main[id]; }); data.giderler.forEach(g => giderEkle(g.key, g.val)); data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar', ts.key, ts.val, !ts.isFixed, ts.isFixed)); data.notlar.forEach(n => createNoteItem('notlar-list', 'Notunuzu buraya yazın...', n)); document.getElementById('editor1').value = data.duzenleyenler[0] || ''; document.getElementById('editor2').value = data.duzenleyenler[1] || ''; hesapla(); }
     function resetData() { if (confirm('Emin misiniz? Kayıtlı tüm veriler silinecek ve form sıfırlanacak.')) { localStorage.removeItem(LOCAL_STORAGE_KEY); window.location.reload(); } }
-    
     window.onload = function() { loadDataFromLocal(); if (document.getElementById('giderler-list').children.length === 0) { giderEkle('EKMEK ÖDEMESİ'); giderEkle('PERSONEL EKMEK'); giderEkle(); } if (document.getElementById('toptan-satis-list').children.length === 0) { createDynamicItem('toptan-satis-list', '', 'Değer Girin', 'SODEXO', '', false, true); createDynamicItem('toptan-satis-list', '', 'Değer Girin', 'SETCARD', '', false, true); createDynamicItem('toptan-satis-list', '', 'Değer Girin', 'TOKEN', '', false, true); createDynamicItem('toptan-satis-list', '', 'Değer Girin', 'TICKET', '', false, true); } if (document.getElementById('notlar-list').children.length === 0) { notEkle(); } hesapla(); };
     function downloadDataFile() { const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) { digerGiderler.push({ aciklama, tutar }); } }); const toptanSatislar = []; document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if ( (item.classList.contains('fixed-item')) || (!item.classList.contains('fixed-item') && aciklama) ) { toptanSatislar.push({ aciklama, tutar }); } }); const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); }); const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2); const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; const giderPusulasi = getFloat('giderPusulasi'); const toplamGider = digerGiderler.reduce((sum, item) => sum + item.tutar, 0) + giderPusulasi; const nakitKalan = nakitGiris - toplamGider; const kasaAcigi = getFloat('kasaAcigi'); const kasaFazla = getFloat('kasaFazla'); const data = { tarih: tarihYazisi, genelCiro, nakitGiris, vizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari: toplamGider, nakitKalan, kasaAcigi, kasaFazla, duzenleyenler }; const jsonData = JSON.stringify(data, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); const dateForFilename = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-'); link.download = `${dateForFilename}.json`; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
 </script>
