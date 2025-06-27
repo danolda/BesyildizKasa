@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Günlük Kasa Raporu</title>
+    <title>Günlük Kasa Veri Girişi</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 1400px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -14,7 +14,6 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
-        .form-group input:focus { border-color: #5bc0de; outline: none; box-shadow: 0 0 5px rgba(91, 192, 222, 0.5); }
         .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         .dynamic-list .item input:first-child { flex: 3; }
@@ -22,7 +21,6 @@
         .dynamic-list .item.note-item input { flex: 1; }
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; }
         .btn-danger { background-color: #d9534f; }
-        .btn:hover { opacity: 0.9; }
         .footer-controls { text-align: center; margin-top: 30px; }
         .download-btn { background-color: #007bff; font-size: 1.2em; padding: 15px 25px; }
     </style>
@@ -30,12 +28,12 @@
 <body>
 
 <div class="container">
-    <h1>GÜNLÜK KASA RAPORU</h1>
-    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butona basarak Excel dosyasını indirebilirsiniz.</p>
+    <h1>Günlük Kasa Veri Girişi</h1>
+    <p><strong>Talimat:</strong> Verileri girdikten sonra aşağıdaki butona basarak <strong>veri dosyasını (.json) indirin.</strong></p>
     <p><strong>Tarih:</strong> <span id="current-date"></span></p>
 
+    <!-- FORM ALANLARI (DEĞİŞİKLİK YOK) -->
     <div class="grid-container">
-        <!-- ANA GİRİŞLER BÖLÜMÜ -->
         <div class="section">
             <h2>Ana Veri Girişleri</h2>
             <div class="form-group"><label for="genelCiro">GENEL TOPLAM FİŞ CİROSU</label><input type="text" inputmode="decimal" id="genelCiro" placeholder="Örn: 168227,00" oninput="hesapla()"></div>
@@ -46,16 +44,11 @@
             <div class="form-group"><label for="kasaFazla">KASA FAZLA YAZ</label><input type="text" inputmode="decimal" id="kasaFazla" placeholder="Örn: 0" oninput="hesapla()"></div>
             <div class="total-display">TOPLAM NAKİT KALAN PARA: <span id="toplamNakitKalan">0,00</span></div>
         </div>
-        
-        <!-- GİDERLER BÖLÜMÜ -->
         <div class="section">
             <h2>Giderler</h2>
-            <p>Açıklama ve tutar girerek yeni giderler ekleyebilirsiniz.</p>
             <div id="giderler-list" class="dynamic-list"></div>
             <button class="btn" onclick="giderEkle()">Yeni Gider Ekle</button>
         </div>
-        
-        <!-- TOPTAN SATIŞ BÖLÜMÜ -->
         <div class="section">
             <h2>Toptan Satış Bölümü</h2>
             <div id="toptan-satis-list" class="dynamic-list">
@@ -66,18 +59,15 @@
             </div>
             <button class="btn" onclick="toptanSatisEkle()">Yeni Toptan Satış Ekle</button>
         </div>
-
-        <!-- NOTLAR BÖLÜMÜ -->
         <div class="section">
             <h2>Notlar</h2>
-            <p>Günün önemli notlarını buraya ekleyebilirsiniz.</p>
             <div id="notlar-list" class="dynamic-list"></div>
             <button class="btn" onclick="notEkle()">Yeni Not Ekle</button>
         </div>
     </div>
 
     <div class="footer-controls">
-        <button class="btn download-btn" onclick="downloadExcelFile()">Excel Dosyasını İndir</button>
+        <button class="btn download-btn" onclick="downloadDataFile()">Veri Dosyasını (.json) İndir</button>
     </div>
 </div>
 
@@ -86,184 +76,103 @@
     const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
     document.getElementById('current-date').textContent = tarihYazisi;
 
-    function formatNum(num) {
-        if (isNaN(num)) return "0,00";
-        return num.toFixed(2).replace('.', ',');
-    }
-
     function getFloat(id) {
         const value = document.getElementById(id).value;
-        const sanitizedValue = value.replace(/\./g, '').replace(',', '.'); // Binlik ayıracını kaldır, ondalığı noktaya çevir
+        const sanitizedValue = value.replace(/\./g, '').replace(',', '.');
         return parseFloat(sanitizedValue) || 0;
     }
 
-    function getDynamicListTotal(listId) {
-        let total = 0;
-        const items = document.querySelectorAll(`#${listId} .item input:last-of-type`);
-        items.forEach(item => {
-            const value = item.value.replace(/\./g, '').replace(',', '.');
-            total += (parseFloat(value) || 0);
+    function getDynamicList(listId) {
+        const list = [];
+        document.querySelectorAll(`#${listId} .item`).forEach(item => {
+            const key = item.children[0].value;
+            const value = getFloatFromValue(item.children[1].value);
+            if (key && value > 0) {
+                list.push({ aciklama: key, tutar: value });
+            }
         });
-        return total;
+        return list;
+    }
+    
+    function getNoteList(listId) {
+        const list = [];
+        document.querySelectorAll(`#${listId} .item input`).forEach(input => {
+            if (input.value) list.push(input.value);
+        });
+        return list;
     }
 
+    function getFloatFromValue(valueStr) {
+        return parseFloat(valueStr.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    
+    // HESAPLAMA ve DİNAMİK LİSTE FONKSİYONLARI (DEĞİŞİKLİK YOK)
+    function formatNum(num) { if (isNaN(num)) return "0,00"; return num.toFixed(2).replace('.', ','); }
     function hesapla() {
         const genelCiro = getFloat('genelCiro');
         const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
-        
-        const giderlerToplami = getDynamicListTotal('giderler-list');
+        const giderlerToplami = getDynamicList('giderler-list').reduce((sum, item) => sum + item.tutar, 0);
         const giderPusulasi = getFloat('giderPusulasi');
         const toplamGiderler = giderlerToplami + giderPusulasi;
-
         const nakitKalan = nakitGiris - toplamGiderler;
         const kasaAcigi = getFloat('kasaAcigi');
         const kasaFazla = getFloat('kasaFazla');
         const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
-
         document.getElementById('toplamNakitKalan').textContent = formatNum(toplamNakitKalan);
     }
-    
-    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder, isReadonly = false) {
-        const list = document.getElementById(listId);
-        const item = document.createElement('div');
-        item.className = 'item';
-        const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder; if (isReadonly) keyInput.readOnly = true;
-        const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = valuePlaceholder; valueInput.oninput = hesapla;
-        const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = function() { item.remove(); hesapla(); };
-        item.appendChild(keyInput); item.appendChild(valueInput); item.appendChild(removeBtn);
-        list.appendChild(item);
-        return item;
-    }
-    
-    function createNoteItem(listId, placeholder) {
-        const list = document.getElementById(listId);
-        const item = document.createElement('div'); item.className = 'item note-item';
-        const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder;
-        const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = function() { item.remove(); };
-        item.appendChild(noteInput); item.appendChild(removeBtn);
-        list.appendChild(item);
-    }
-
+    function createDynamicItem(listId, keyPlaceholder, valuePlaceholder) { const list = document.getElementById(listId); const item = document.createElement('div'); item.className = 'item'; const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = keyPlaceholder; const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = valuePlaceholder; valueInput.oninput = hesapla; const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger'; removeBtn.onclick = function() { item.remove(); hesapla(); }; item.appendChild(keyInput); item.appendChild(valueInput); item.appendChild(removeBtn); list.appendChild(item); }
+    function createNoteItem(listId, placeholder) { const list = document.getElementById(listId); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger'; removeBtn.onclick = function() { item.remove(); }; item.appendChild(noteInput); item.appendChild(removeBtn); list.appendChild(item); }
     const notEkle = () => createNoteItem('notlar-list', 'Notunuzu buraya yazın...');
     const giderEkle = () => createDynamicItem('giderler-list', 'Gider Açıklaması', 'Tutar');
     const toptanSatisEkle = () => createDynamicItem('toptan-satis-list', 'Firma Adı', 'Tutar');
-
-    function downloadExcelFile() {
-        // 1. Verileri topla ve hesapla
+    window.onload = function() { notEkle(); for(let i=0; i<5; i++) giderEkle(); hesapla(); };
+    // --- YENİ İNDİRME FONKSİYONU ---
+    function downloadDataFile() {
+        // Tüm hesaplamaları ve form verilerini topla
         const genelCiro = getFloat('genelCiro');
         const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
         const giderPusulasi = getFloat('giderPusulasi');
-        const digerGiderler = getDynamicListTotal('giderler-list');
-        const toplamGider = giderPusulasi + digerGiderler;
+        const digerGiderler = getDynamicList('giderler-list');
+        const toplamGider = digerGiderler.reduce((sum, item) => sum + item.tutar, 0) + giderPusulasi;
         const nakitKalan = nakitGiris - toplamGider;
         const kasaAcigi = getFloat('kasaAcigi');
         const kasaFazla = getFloat('kasaFazla');
         const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
-        const fisSayisi = getFloat('fisSayisi');
 
-        // 2. Excel Şablonunu 2 boyutlu dizi olarak oluştur
-        // Orijinal dosyanızdaki tüm satırları ve virgülleri tam olarak yansıtır
-        let grid = [
-            ["GÜNLÜK KASA RAPORU",,, "TÜRKİŞ", "SARI ALANA YAZMA ",,,,,,,,,,,],
-            ['"FÖYDE SADECE BEYAZ OLAN\nKISIMLARI YAZINIZ "', "TARİH :", "",, "BANKALAR ",,,,, "NOTLAR",,,,,,,,],
-            ["AÇIKLAMA", "GÜNSONU TOPLAM ", "NAKİT GİRİŞ", "VİZA GİRİŞ",,,,, "1", "",,,,,,,,,],
-            ["GENEL TOPLAM FİŞ CİROSU", "", "", "", "TEBBANKASI",, "",,, "2", "",,,,,,,,,],
-            [,,,, "ZİRAAT BANKASI",,,,, "3",,,,,,,,,],
-            ["",,, "", "FİNANSBANK",,,,,,,,,,,,,,],
-            ["",,, "", "HALKBANK",,,,, "TOPTAN SATIŞ BÖLÜMÜ",,,,,,,],
-            ["",,, "", "SODEXO",,,,, "1",,,,,,,,,],
-            [,,,, "SET CARD",,,,, "2",,,,,,,,,],
-            [,,,, "TOKEN FLEX",,,,, "3",,,,,,,,,],
-            [,,,, "TİCKET",,,,,,,,,,,,,,],
-            [,,,, "TOPLAM ",, "",,, "4",,,,,,,,,],
-            [,,,, "FİS SAYISI",, "",,, "5", "",,,,,,, "",,],
-            [,,,, "Z SONU İNDİRİM",,,,, "6", "",,,,,,, "",,],
-            [,,,, "SEHER TONGAL",,,,, "7", "",,,,,,,],
-            [,,,, "HASAN ATİLA",,,,, "8", "",,,,,,, "",,],
-            [,,,,,,,, "9",,,,,,,,,],
-            ["GİDER PUSULASININ TOPLAM RAKAMINI YAZINIZ",,, "",,,,,, "10",,,,,,,,,],
-            ["GİDER TOPLAMLARI",,, "",,,,,, "11",,,,,,,,,],
-            ["NAKİT KALAN",, "",,,,,,, "12",,,,,,,,,],
-            ["KASA AÇIĞI YAZ :", "",,,,,,,, "13",,,,,,,,,],
-            ["KASA FAZLA YAZ :", "",,,,,,,, "14",,,,,,,,,],
-            ["TOPLAM NAKİT KALAN PARA:", "",,,,,,,, "TOPLAM",,,,,,,,,]
-        ];
+        // Verileri bir JavaScript nesnesinde topla
+        const data = {
+            tarih: tarihYazisi,
+            genelCiro: genelCiro,
+            nakitGiris: nakitGiris,
+            vizaGiris: vizaGiris,
+            fisSayisi: getFloat('fisSayisi'),
+            giderPusulasi: giderPusulasi,
+            digerGiderler: digerGiderler,
+            toptanSatislar: getDynamicList('toptan-satis-list'),
+            notlar: getNoteList('notlar-list'),
+            giderToplamlari: toplamGider,
+            nakitKalan: nakitKalan,
+            kasaAcigi: kasaAcigi,
+            kasaFazla: kasaFazla,
+            toplamNakitKalan: toplamNakitKalan,
+        };
 
-        // 3. Hesaplanan verileri şablona (grid'e) yerleştir
-        grid[1][2] = tarihYazisi;
-        grid[3][1] = formatNum(genelCiro);
-        grid[3][2] = formatNum(nakitGiris);
-        grid[3][3] = formatNum(vizaGiris);
-        grid[3][6] = formatNum(vizaGiris); // TEBBANKASI
-        grid[11][6] = formatNum(vizaGiris); // BANKALAR TOPLAM
-        
-        // Giderler
-        let giderRow = 5;
-        document.querySelectorAll('#giderler-list .item').forEach(item => {
-            if (giderRow < 17) { // Giderler için ayrılan alanı aşmamak için kontrol
-                grid[giderRow][0] = item.children[0].value;
-                grid[giderRow][3] = formatNum(parseFloat(item.children[1].value.replace(/\./g, '').replace(',', '.')) || 0);
-                giderRow++;
-            }
-        });
+        // Nesneyi JSON formatında metne çevir
+        const jsonData = JSON.stringify(data, null, 2); // null, 2 -> okunabilir formatta yazar
 
-        // Toptan Satış
-        let toptanSatisRow = 7;
-        document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
-            if (toptanSatisRow < 16) {
-                grid[toptanSatisRow][10] = item.children[0].value;
-                grid[toptanSatisRow][15] = formatNum(parseFloat(item.children[1].value.replace(/\./g, '').replace(',', '.')) || 0);
-                toptanSatisRow++;
-            }
-        });
-
-        // Notlar
-        let notRow = 2;
-        document.querySelectorAll('#notlar-list .item input').forEach(input => {
-            if (notRow < 17) {
-                 grid[notRow][9] = input.value;
-                 notRow++;
-            }
-        });
-
-        grid[12][6] = fisSayisi.toString(); // Fiş Sayısı
-        grid[17][3] = formatNum(giderPusulasi);
-        grid[18][3] = formatNum(toplamGider);
-        grid[19][2] = formatNum(nakitKalan);
-        grid[20][1] = formatNum(kasaAcigi);
-        grid[21][1] = formatNum(kasaFazla);
-        grid[22][1] = formatNum(toplamNakitKalan);
-
-        // 4. Grid'i CSV formatında metne dönüştür
-        // Excel'in Türkçe karakterleri doğru açması için BOM (Byte Order Mark) ekliyoruz.
-        const csvContent = '\uFEFF' + grid.map(row => row.join(",")).join("\n");
-
-        // 5. Dosyayı oluştur ve indirmeyi tetikle
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            const dateForFilename = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-            link.setAttribute("href", url);
-            link.setAttribute("download", `KASA_RAPORU_${dateForFilename}.xls`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
+        // Dosyayı oluştur ve indir
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'kasa-verileri.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
-
-    // Sayfa yüklendiğinde varsayılan elemanları oluştur
-    window.onload = function() {
-        notEkle();
-        for(let i=0; i<5; i++) giderEkle();
-        hesapla();
-    };
 </script>
 
 </body>
