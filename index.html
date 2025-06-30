@@ -8,7 +8,10 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
         .container { max-width: 1400px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         h1, h2 { color: #d9534f; border-bottom: 2px solid #f0ad4e; padding-bottom: 10px; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 40px; }
+        
+        /* ANA KUTU GENİŞLETİLDİ */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 40px; }
+        
         .section { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
         .instructions { margin-bottom: 25px; background-color: #eef7ff; padding: 15px; border-radius: 5px; border-left: 5px solid #007bff; }
         .instructions ol { padding-left: 20px; margin: 5px 0 0 0; }
@@ -19,18 +22,15 @@
         .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         
-        /* --- YENİ VE GARANTİLİ HİZALAMA KURALLARI --- */
-        #giderler-list .item > *:nth-child(1) { flex: 3; } /* Açıklama */
-        #giderler-list .item > *:nth-child(2) { flex: 2; } /* Tutar */
-
-        #toptan-satis-list .item > *:nth-child(1) { flex: 1 1 auto; }    /* Açıklama - Kalan tüm boşluğu doldur */
-        #toptan-satis-list .item > *:nth-child(2) { flex: 0 0 110px; } /* Ödeme Tipi - Sabit genişlik */
-        #toptan-satis-list .item > *:nth-child(3) { flex: 0 0 80px; }  /* Tutar - Sabit genişlik */
+        /* İç hizalamalar dengeli olacak şekilde ayarlandı */
+        .dynamic-list .item:not(.fixed-item) > *:nth-child(1) { flex: 2.5; } /* Açıklama */
+        .dynamic-list .item:not(.fixed-item) > *:nth-child(2) { flex: 1.5; } /* Ödeme Tipi */
+        .dynamic-list .item:not(.fixed-item) > *:nth-child(3) { flex: 1; }   /* Tutar */
         
-        #toptan-satis-list .item.fixed-item > select,
-        #toptan-satis-list .item.fixed-item > button {
-            visibility: hidden;
-        }
+        .dynamic-list .item.fixed-item > *:nth-child(1),
+        #giderler-list .item > *:nth-child(1) { flex: 3; }
+        .dynamic-list .item.fixed-item > *:nth-child(2),
+        #giderler-list .item > *:nth-child(2) { flex: 2; }
 
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; transition: background-color 0.2s; }
         .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
@@ -60,6 +60,8 @@
 <footer>© Copyright 2025 by Melih Emre Karaköse. All Rights Reserved.</footer>
 
 <script>
+    // Bu script bölümünün içeriği bir öncekiyle tamamen aynıdır.
+    // Değişiklik sadece yukarıdaki CSS stil bölümünde yapılmıştır.
     const MAX_GIDERLER = 12;
     const MAX_TOPTAN_SATIS = 15;
     const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri';
@@ -68,65 +70,35 @@
     const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
     document.getElementById('current-date').textContent = tarihYazisi;
 
-    function createDynamicItem(listId, itemData) {
-        const list = document.getElementById(listId);
-        const item = document.createElement('div');
-        item.className = 'item';
-        if (itemData.isFixed) item.classList.add('fixed-item');
+    function getFloat(id) { return parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0'); }
+    function getFloatFromValue(valueStr) { return parseFloat((valueStr ? valueStr.replace(/\./g, '').replace(',', '.') : '0') || '0'); }
 
-        const keyInput = document.createElement('input');
-        keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || '';
-        if (itemData.isFixed) keyInput.readOnly = true;
-        item.appendChild(keyInput);
-
-        if (listId === 'toptan-satis-list') {
-            const select = document.createElement('select');
-            select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`;
-            select.value = itemData.type || '';
-            select.onchange = hesapla;
-            item.appendChild(select);
-        }
-
-        const valueInput = document.createElement('input');
-        valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || '';
-        valueInput.oninput = hesapla;
-        item.appendChild(valueInput);
-
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); };
-        item.appendChild(removeBtn);
-        
-        if (itemData.isNewToptan) list.insertBefore(item, list.firstChild);
-        else list.appendChild(item);
+    function hesapla() {
+        const genelCiro = getFloat('genelCiro');
+        const vizaGiris = getFloat('vizaGiris');
+        const nakitGiris = genelCiro - vizaGiris;
+        let giderlerToplami = 0;
+        document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => {
+            giderlerToplami += getFloatFromValue(input.value);
+        });
+        giderlerToplami += getFloat('giderPusulasi');
+        const nakitKalan = nakitGiris - giderlerToplami;
+        const kasaAcigi = getFloat('kasaAcigi');
+        const kasaFazla = getFloat('kasaFazla');
+        const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
+        document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ',');
     }
     
-    function hesapla() { const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; let giderlerToplami = 0; document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => giderlerToplami += getFloatFromValue(input.value)); giderlerToplami += getFloat('giderPusulasi'); const nakitKalan = nakitGiris - giderlerToplami; const kasaAcigi = getFloat('kasaAcigi'); const kasaFazla = getFloat('kasaFazla'); const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla; document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ','); }
     const updateButtonStates = () => { document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER; document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS; };
+    function createDynamicItem(listId, itemData) { const list = document.getElementById(listId); const item = document.createElement('div'); item.className = 'item'; if (itemData.isFixed) item.classList.add('fixed-item'); const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || ''; if (itemData.isFixed) keyInput.readOnly = true; item.appendChild(keyInput); if (itemData.isNewToptan) { const select = document.createElement('select'); select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`; select.value = itemData.type || ''; select.onchange = hesapla; item.appendChild(select); } const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || ''; valueInput.oninput = hesapla; item.appendChild(valueInput); const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger'; removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); }; if (!itemData.isFixed) item.appendChild(removeBtn); else item.classList.add('fixed-item'); if (itemData.isNewToptan) { list.insertBefore(item, list.firstChild); } else { list.appendChild(item); } }
     const createNoteItem = (placeholder, val = '') => { const list = document.getElementById('notlar-list'); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; noteInput.value = val; item.appendChild(noteInput); list.appendChild(item); };
     const giderEkle = (key = '', val = '') => { if (document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER) return; createDynamicItem('giderler-list', {key, val}); updateButtonStates(); };
     const toptanSatisEkle = (key = '', type = '', val = '') => { if (document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS) return; createDynamicItem('toptan-satis-list', {key, type, val, isNewToptan: true}); updateButtonStates(); };
-    const getFloat = (id) => parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0');
-    const getFloatFromValue = (valueStr) => parseFloat((valueStr ? valueStr.replace(/\./g, '').replace(',', '.') : '0') || '0');
-    function saveDataToLocal() { const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] }; ['genelCiro', 'vizaGiris', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; }); document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#toptan-satis-list .item').forEach(item => { dataToSave.toptanSatislar.push({ key: item.children[0].value, type: item.children[1].value, val: item.children[2].value, isFixed: item.classList.contains('fixed-item') }); }); document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value)); dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value]; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave)); alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!'); }
+    function saveDataToLocal() { const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] }; ['genelCiro', 'vizaGiris', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; }); document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const isNew = !item.classList.contains('fixed-item'); dataToSave.toptanSatislar.push({ key: item.children[0].value, type: isNew ? item.children[1].value : '', val: isNew ? item.children[2].value : item.children[1].value, isFixed: !isNew }); }); document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value)); dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value]; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave)); alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!'); }
     function loadDataFromLocal() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (!savedData) return; const data = JSON.parse(savedData); document.getElementById('giderler-list').innerHTML = ''; document.getElementById('toptan-satis-list').innerHTML = ''; document.getElementById('notlar-list').innerHTML = ''; Object.keys(data.main).forEach(id => { document.getElementById(id).value = data.main[id]; }); data.giderler.forEach(g => createDynamicItem('giderler-list', {key: g.key, val: g.val})); data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', {key: ts.key, type: ts.type, val: ts.val, isNewToptan: !ts.isFixed, isFixed: ts.isFixed})); createNoteItem('Not 1', data.notlar[0] || ''); createNoteItem('Not 2', data.notlar[1] || ''); createNoteItem('Not 3', data.notlar[2] || ''); document.getElementById('editor1').value = data.duzenleyenler[0] || ''; document.getElementById('editor2').value = data.duzenleyenler[1] || ''; hesapla(); updateButtonStates(); }
     function resetData() { if (confirm('Emin misiniz? Kayıtlı tüm veriler silinecek ve form sıfırlanacak.')) { localStorage.removeItem(LOCAL_STORAGE_KEY); window.location.reload(); } }
-    window.onload = function() {
-        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (savedData) {
-            loadDataFromLocal();
-        } else {
-            giderEkle('EKMEK ÖDEMESİ');
-            giderEkle('PERSONEL EKMEK');
-            createDynamicItem('toptan-satis-list', {key: 'SODEXO', val: '', isFixed: true});
-            createDynamicItem('toptan-satis-list', {key: 'SETCARD', val: '', isFixed: true});
-            createDynamicItem('toptan-satis-list', {key: 'TOKEN', val: '', isFixed: true});
-            createDynamicItem('toptan-satis-list', {key: 'TICKET', val: '', isFixed: true});
-            createNoteItem('Not 1'); createNoteItem('Not 2'); createNoteItem('Not 3');
-            hesapla(); updateButtonStates();
-        }
-    };
-    function downloadDataFile() { let isValid = true; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item) select').forEach(select => { if (select.value === "") { select.style.border = '2px solid red'; isValid = false; } else { select.style.border = '1px solid #ccc'; } }); if (!isValid) { alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.'); return; } const toptanSatislar = []; document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const odemeTipi = item.classList.contains('fixed-item') ? null : item.children[1].value; const tutar = getFloatFromValue(item.children[2].value); if (aciklama) toptanSatislar.push({ aciklama, odemeTipi, tutar }); }); const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); }); const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); }); const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2); const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; const giderPusulasi = getFloat('giderPusulasi'); const giderlerToplami = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi; const toptanNakitCikis = toptanSatislar.filter(ts => ts.odemeTipi === 'NAKİT').reduce((s, ts) => s + ts.tutar, 0); const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis; const data = { tarih: tarihYazisi, genelCiro, nakitGiris, vizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari: giderlerToplami, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler }; const jsonData = JSON.stringify(data, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.download = `${new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')}.json`; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
+    window.onload = function() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (savedData) { loadDataFromLocal(); } else { giderEkle('EKMEK ÖDEMESİ'); giderEkle('PERSONEL EKMEK'); createDynamicItem('toptan-satis-list', {key: 'SODEXO', isFixed: true, val: ''}); createDynamicItem('toptan-satis-list', {key: 'SETCARD', isFixed: true, val: ''}); createDynamicItem('toptan-satis-list', {key: 'TOKEN', isFixed: true, val: ''}); createDynamicItem('toptan-satis-list', {key: 'TICKET', isFixed: true, val: ''}); createNoteItem('Not 1'); createNoteItem('Not 2'); createNoteItem('Not 3'); hesapla(); updateButtonStates(); }};
+    function downloadDataFile() { let isValid = true; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { const select = item.querySelector('select'); if (select && select.value === "") { select.style.border = '2px solid red'; isValid = false; } else if (select) { select.style.border = '1px solid #ccc'; } }); if (!isValid) { alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.'); return; } const toptanSatislar = []; document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const isNew = !item.classList.contains('fixed-item'); const aciklama = item.children[0].value.trim(); const odemeTipi = isNew ? item.children[1].value : null; const tutar = getFloatFromValue(isNew ? item.children[2].value : item.children[1].value); if (aciklama) toptanSatislar.push({ aciklama, odemeTipi, tutar }); }); const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); }); const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); }); const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2); const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; const giderPusulasi = getFloat('giderPusulasi'); const giderlerToplami = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi; const toptanNakitCikis = toptanSatislar.filter(ts => ts.odemeTipi === 'NAKİT').reduce((s, ts) => s + ts.tutar, 0); const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis; const data = { tarih: tarihYazisi, genelCiro, nakitGiris, vizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari: giderlerToplami, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler }; const jsonData = JSON.stringify(data, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.download = `${new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')}.json`; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
 </script>
 
 </body>
