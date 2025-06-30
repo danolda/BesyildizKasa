@@ -67,15 +67,7 @@
     </div>
     <div class="calculator-wrapper">
         <div class="calculator"><div class="calculator-display-container"><div class="calculator-expression" id="calc-expression"> </div><div class="calculator-result" id="calc-result">0</div></div><div class="calculator-keys"><button class="function" data-key="clear">AC</button><button class="function" data-key="backspace">⌫</button><button class="operator" data-key="%">%</button><button class="operator" data-key="/">÷</button><button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button class="operator" data-key="*">×</button><button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button class="operator" data-key="-">−</button><button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button class="operator" data-key="+">+</button><button data-key="0">0</button><button data-key=".">.</button><button class="operator" data-key="=" style="grid-column: span 2;">=</button></div></div>
-        <div class="history-panel"><h3>İşlem Geçmişi <button class="btn btn-danger" id="clear-history">Temizle</button></h3><div class="history-content" id="history-content"></div>
-            <!-- YENİ BUTONLAR BURAYA EKLENDİ -->
-            <div class="transfer-buttons">
-                <button class="btn transfer-btn" data-target-id="genelCiro">FİŞ CİROSU</button>
-                <button class="btn transfer-btn" data-target-id="saltTeb">HAM VİZA</button>
-                <button class="btn transfer-btn" data-target-id="giderPusulasi">GİDER PUSULASI</button>
-                <button class="btn transfer-btn" data-target-id="fisSayisi">FİŞ SAYISI</button>
-            </div>
-        </div>
+        <div class="history-panel"><h3>İşlem Geçmişi <button class="btn btn-danger" id="clear-history">Temizle</button></h3><div class="history-content" id="history-content"></div><div class="transfer-buttons"><button class="btn transfer-btn" data-target-id="genelCiro">FİŞ CİROSU</button><button class="btn transfer-btn" data-target-id="saltTeb">HAM VİZA</button><button class="btn transfer-btn" data-target-id="giderPusulasi">GİDER PUSULASI</button><button class="btn transfer-btn" data-target-id="fisSayisi">FİŞ SAYISI</button></div></div>
     </div>
 </div>
 <footer>© Copyright 2025 by Melih Emre Karaköse. All Rights Reserved.</footer>
@@ -83,7 +75,7 @@
 <script>
     // --- TEMEL DEĞİŞKENLER VE AYARLAR ---
     const MAX_GIDERLER = 12; const MAX_TOPTAN_SATIS = 15; const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri'; const CALC_HISTORY_KEY = 'calculatorHistory';
-    let selectedHistoryValue = null; // Seçili geçmiş değerini tutacak değişken
+    let selectedHistoryValue = null;
     const tarih = new Date(); const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase(); document.getElementById('current-date').textContent = tarihYazisi;
     
     // --- YARDIMCI FONKSİYONLAR ---
@@ -91,8 +83,30 @@
     const getFloat = (id) => parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0');
     const getFloatFromValue = (valueStr) => parseFloat((valueStr.replace(/\./g, '').replace(',', '.')) || '0');
 
-    // --- ANA HESAPLAMA FONKSİYONU ---
-    function hesapla() { let toptanVisaCikis = 0; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { if (item.querySelector('select')?.value === 'VİSA') toptanVisaCikis += getFloatFromValue(item.querySelector('input[type="text"]:last-of-type').value); }); const netVizaGiris = getFloat('saltTeb') - toptanVisaCikis; document.getElementById('vizaGiris').value = formatToCurrency(netVizaGiris); const genelCiro = getFloat('genelCiro'); const nakitGiris = genelCiro - netVizaGiris; let giderlerToplami = getFloat('giderPusulasi'); document.querySelectorAll('#giderler-list .item').forEach(item => giderlerToplami += getFloatFromValue(item.children[1].value)); let toptanNakitCikis = 0; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { if (item.querySelector('select')?.value === 'NAKİT') toptanNakitCikis += getFloatFromValue(item.querySelector('input[type="text"]:last-of-type').value); }); const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis; document.getElementById('toplamNakitKalan').textContent = formatToCurrency(nakitKalan - getFloat('kasaAcigi') + getFloat('kasaFazla')); }
+    // --- ANA HESAPLAMA FONKSİYONU (DÜZELTİLDİ) ---
+    function hesapla() {
+        let toptanVisaCikis = 0;
+        document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { if (item.querySelector('select')?.value === 'VİSA') toptanVisaCikis += getFloatFromValue(item.querySelector('input[type="text"]:last-of-type').value); });
+        
+        const netVizaGiris = getFloat('saltTeb') - toptanVisaCikis;
+        document.getElementById('vizaGiris').value = formatToCurrency(netVizaGiris);
+
+        const genelCiro = getFloat('genelCiro');
+        const nakitGiris = genelCiro - netVizaGiris;
+
+        let giderlerToplami = getFloat('giderPusulasi');
+        document.querySelectorAll('#giderler-list .item').forEach(item => {
+            giderlerToplami += getFloatFromValue(item.children[1].value);
+        });
+
+        // *** DÜZELTME: TOPTAN NAKİT ÇIKIŞI ARTIK HESAPLAMADAN ÇIKARILDI ***
+        // const toptanNakitCikis = ...;  (Bu kısım tamamen kaldırıldı)
+        
+        const nakitKalan = nakitGiris - giderlerToplami; // 'toptanNakitCikis' buradan çıkarıldı
+
+        const toplamNakitKalan = nakitKalan - getFloat('kasaAcigi') + getFloat('kasaFazla');
+        document.getElementById('toplamNakitKalan').textContent = formatToCurrency(toplamNakitKalan);
+    }
 
     // --- DİNAMİK LİSTE FONKSİYONLARI ---
     function updateButtonStates() { document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER; document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS; }
@@ -107,15 +121,13 @@
     function resetData() { if (confirm('Emin misiniz? Kayıtlı tüm veriler silinecek ve form sıfırlanacak.')) { localStorage.removeItem(LOCAL_STORAGE_KEY); localStorage.removeItem(CALC_HISTORY_KEY); window.location.reload(); } }
     
     // --- JSON İNDİRME FONKSİYONU ---
-    function downloadDataFile() { let isValid = true; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { const select = item.querySelector('select'); if (select && select.value === "") { select.style.border = '2px solid red'; isValid = false; } else if (select) { select.style.border = '1px solid #ccc'; } }); if (!isValid) { alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.'); return; } const toptanSatislar = []; document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const isNew = !item.classList.contains('fixed-item'); const aciklama = item.children[0].value.trim(); const odemeTipi = isNew ? item.children[1].value : null; const tutar = getFloatFromValue(isNew ? item.children[2].value : item.children[1].value); if (aciklama) toptanSatislar.push({ aciklama, odemeTipi, tutar }); }); const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); }); const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); }); const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2); const netVizaGiris = getFloat('vizaGiris'); const nakitGiris = getFloat('genelCiro') - netVizaGiris; const giderPusulasi = getFloat('giderPusulasi'); const giderToplamlari = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi; const toptanNakitCikis = toptanSatislar.filter(ts => ts.odemeTipi === 'NAKİT').reduce((s, ts) => s + ts.tutar, 0); const nakitKalan = nakitGiris - giderToplamlari - toptanNakitCikis; const data = { tarih: tarihYazisi, genelCiro: getFloat('genelCiro'), nakitGiris, vizaGiris: netVizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler }; const jsonData = JSON.stringify(data, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.download = `${new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')}.json`; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
+    function downloadDataFile() { let isValid = true; document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => { const select = item.querySelector('select'); if (select && select.value === "") { select.style.border = '2px solid red'; isValid = false; } else if (select) { select.style.border = '1px solid #ccc'; } }); if (!isValid) { alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.'); return; } const toptanSatislar = []; document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const isNew = !item.classList.contains('fixed-item'); const aciklama = item.children[0].value.trim(); const odemeTipi = isNew ? item.children[1].value : null; const tutar = getFloatFromValue(isNew ? item.children[2].value : item.children[1].value); if (aciklama) toptanSatislar.push({ aciklama, odemeTipi, tutar }); }); const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); }); const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); }); const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2); const netVizaGiris = getFloat('vizaGiris'); const nakitGiris = getFloat('genelCiro') - netVizaGiris; const giderPusulasi = getFloat('giderPusulasi'); const giderToplamlari = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi; const nakitKalan = nakitGiris - giderToplamlari; const data = { tarih: tarihYazisi, genelCiro: getFloat('genelCiro'), nakitGiris, vizaGiris: netVizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler }; const jsonData = JSON.stringify(data, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.download = `${new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')}.json`; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
 
     // --- HESAP MAKİNESİ KODLARI ---
     const displayResultEl = document.getElementById('calc-result'); const displayExpressionEl = document.getElementById('calc-expression'); let currentExpression = ''; let history = [];
     function evaluateExpression(expr) { if (!expr || /[\+\-\*\/%]$/.test(expr.trim())) { const lastOpIndex = Math.max(expr.lastIndexOf('+'), expr.lastIndexOf('-'), expr.lastIndexOf('*'), expr.lastIndexOf('/'), expr.lastIndexOf('%')); expr = expr.substring(0, lastOpIndex).trim(); } if (!expr) return 0; try { return new Function('return ' + expr.replace(/,/g, '.'))(); } catch (e) { return NaN; } }
     function updateCalculatorDisplay() { const liveResult = evaluateExpression(currentExpression); const formattedLiveResult = !isNaN(liveResult) ? liveResult.toLocaleString('tr-TR', { maximumFractionDigits: 7 }) : ''; const formattedExpression = currentExpression.replace(/\//g, ' ÷ ').replace(/\*/g, ' × ').replace(/\+/g, ' + ').replace(/-/g, ' - ').replace(/%/g, ' % '); displayExpressionEl.textContent = formattedLiveResult; displayResultEl.textContent = formattedExpression || '0'; }
     function handleCalculatorInput(key) { if (/\d/.test(key)) { currentExpression += key; } else if (key === '.') { const parts = currentExpression.split(/[\+\-\*\/%]/); if (!parts[parts.length - 1].includes('.')) { currentExpression += key; } } else if (['+', '-', '*', '/', '%'].includes(key)) { if (currentExpression && !/[\+\-\*\/%]$/.test(currentExpression.trim())) { currentExpression += key; } } else if (key === 'clear') { currentExpression = ''; } else if (key === 'backspace') { currentExpression = currentExpression.trim().slice(0, -1).trim(); } else if (key === '=') { if (currentExpression && !/[\+\-\*\/%]$/.test(currentExpression.trim())) { const result = evaluateExpression(currentExpression); if (!isNaN(result)) { addToHistory(currentExpression, result); currentExpression = String(result).replace('.', ','); } } } updateCalculatorDisplay(); }
-    
-    // --- HESAP MAKİNESİ GEÇMİŞİ KODLARI ---
     const historyContent = document.getElementById('history-content'); const clearHistoryBtn = document.getElementById('clear-history');
     function addToHistory(expr, res) { const formattedExpr = expr.replace(/\//g, '÷').replace(/\*/g, '×'); const formattedRes = res.toLocaleString('tr-TR', { maximumFractionDigits: 7 }); history.unshift({ expr: formattedExpr, res: formattedRes, rawRes: res }); if (history.length > 50) history.pop(); saveHistory(); renderHistory(); }
     function renderHistory() { historyContent.innerHTML = ''; history.forEach(item => { const historyItem = document.createElement('div'); historyItem.className = 'history-item'; historyItem.innerHTML = `<span class="expr">${item.expr} =</span><span class="res">${item.res}</span>`; historyItem.addEventListener('click', (event) => { document.querySelectorAll('.history-item.selected').forEach(el => el.classList.remove('selected')); event.currentTarget.classList.add('selected'); selectedHistoryValue = item.rawRes; }); historyContent.appendChild(historyItem); }); }
@@ -125,23 +137,7 @@
     document.querySelector('.calculator-keys').addEventListener('click', (event) => { if (event.target.matches('button')) { handleCalculatorInput(event.target.dataset.key); } });
 
     // --- GEÇMİŞTEN VERİ AKTARMA BUTONLARI ---
-    document.querySelector('.transfer-buttons').addEventListener('click', (event) => {
-        if (event.target.matches('.transfer-btn')) {
-            if (selectedHistoryValue === null) {
-                alert('Lütfen önce işlem geçmişinden bir değer seçin.');
-                return;
-            }
-            const targetId = event.target.dataset.targetId;
-            const targetInput = document.getElementById(targetId);
-            if (targetInput) {
-                targetInput.value = String(selectedHistoryValue).replace('.', ',');
-                hesapla(); // Formdaki tüm hesaplamaları anında güncelle
-                // Seçimi sıfırla
-                document.querySelectorAll('.history-item.selected').forEach(el => el.classList.remove('selected'));
-                selectedHistoryValue = null;
-            }
-        }
-    });
+    document.querySelector('.transfer-buttons').addEventListener('click', (event) => { if (event.target.matches('.transfer-btn')) { if (selectedHistoryValue === null) { alert('Lütfen önce işlem geçmişinden bir değer seçin.'); return; } const targetId = event.target.dataset.targetId; const targetInput = document.getElementById(targetId); if (targetInput) { targetInput.value = String(selectedHistoryValue).replace('.', ','); hesapla(); document.querySelectorAll('.history-item.selected').forEach(el => el.classList.remove('selected')); selectedHistoryValue = null; } } });
 
     // --- SAYFA YÜKLENME OLAYLARI ---
     window.onload = function() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (savedData) { loadDataFromLocal(); } else { giderEkle('EKMEK ÖDEMESİ'); giderEkle('PERSONEL EKMEK'); createNoteItem('Not 1'); createNoteItem('Not 2'); createNoteItem('Not 3'); } updateButtonStates(); hesapla(); loadHistory(); updateCalculatorDisplay(); };
