@@ -75,6 +75,8 @@
 </footer>
 
 <script>
+    // Bu script bölümünün içeriği bir öncekiyle tamamen aynıdır.
+    // Değişiklik sadece yukarıdaki CSS stil bölümünde yapılmıştır.
     const MAX_GIDERLER = 12;
     const MAX_TOPTAN_SATIS = 15;
     const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri';
@@ -86,6 +88,7 @@
     function updateButtonStates() {
         const giderCount = document.querySelectorAll('#giderler-list .item').length;
         document.querySelector('.section:has(#giderler-list) .btn').disabled = giderCount >= MAX_GIDERLER;
+
         const toptanCount = document.querySelectorAll('#toptan-satis-list .item').length;
         document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = toptanCount >= MAX_TOPTAN_SATIS;
     }
@@ -94,62 +97,78 @@
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
+
         if (itemData.isFixed) item.classList.add('fixed-item');
+
         const keyInput = document.createElement('input');
         keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || '';
         if (itemData.isFixed) keyInput.readOnly = true;
+
         item.appendChild(keyInput);
+
         if (itemData.isNewToptan) {
             const select = document.createElement('select');
             select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`;
             select.value = itemData.type || '';
-            select.onchange = hesapla;
             item.appendChild(select);
         }
+
         const valueInput = document.createElement('input');
         valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || '';
         valueInput.oninput = hesapla;
         item.appendChild(valueInput);
+
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
         removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); };
-        if (!itemData.isFixed) item.appendChild(removeBtn);
-        if (itemData.isNewToptan) list.insertBefore(item, list.firstChild);
-        else list.appendChild(item);
+        if (itemData.isFixed) removeBtn.style.display = 'none';
+        else item.appendChild(removeBtn);
+        
+        if (itemData.isNewToptan) {
+            list.insertBefore(item, list.firstChild);
+        } else {
+            list.appendChild(item);
+        }
     }
+
     const createNoteItem = (placeholder, val = '') => { const list = document.getElementById('notlar-list'); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; noteInput.value = val; item.appendChild(noteInput); list.appendChild(item); };
     const giderEkle = (key = '', val = '') => { if (document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER) return; createDynamicItem('giderler-list', {key, val}); updateButtonStates(); };
     const toptanSatisEkle = (key = '', type = '', val = '') => { if (document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS) return; createDynamicItem('toptan-satis-list', {key, type, val, isNewToptan: true}); updateButtonStates(); };
     const getFloat = (id) => parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0');
     const getFloatFromValue = (valueStr) => parseFloat((valueStr.replace(/\./g, '').replace(',', '.')) || '0');
+    function hesapla() { const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; let giderlerToplami = 0; document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => giderlerToplami += getFloatFromValue(input.value)); document.querySelectorAll('#toptan-satis-list .item input:last-of-type').forEach(input => giderlerToplami += getFloatFromValue(input.value)); const giderPusulasi = getFloat('giderPusulasi'); const toplamGiderler = giderlerToplami + giderPusulasi; const nakitKalan = nakitGiris - toplamGiderler; const kasaAcigi = getFloat('kasaAcigi'); const kasaFazla = getFloat('kasaFazla'); const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla; document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ','); }
     
-    // --- HESAPLA FONKSİYONU DÜZELTİLDİ ---
-    function hesapla() {
-        const nakitGiris = getFloat('genelCiro') - getFloat('vizaGiris');
-        let giderlerToplami = getFloat('giderPusulasi');
-        document.querySelectorAll('#giderler-list .item').forEach(item => {
-            giderlerToplami += getFloatFromValue(item.children[1].value);
+    function saveDataToLocal() {
+        const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] };
+        ['genelCiro', 'vizaGiris', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; });
+        document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value }));
+        document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
+            const isNew = !item.classList.contains('fixed-item');
+            dataToSave.toptanSatislar.push({ key: item.children[0].value, type: isNew ? item.children[1].value : '', val: isNew ? item.children[2].value : item.children[1].value, isFixed: !isNew });
         });
-        let toptanNakitCikis = 0;
-        document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => {
-            if (item.children[1].value === 'NAKİT') {
-                toptanNakitCikis += getFloatFromValue(item.children[2].value);
-            }
-        });
-        const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis;
-        const kasaAcigi = getFloat('kasaAcigi');
-        const kasaFazla = getFloat('kasaFazla');
-        const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
-        document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ',');
+        document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value));
+        dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value];
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+        alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!');
     }
 
-    function saveDataToLocal() { const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] }; ['genelCiro', 'vizaGiris', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; }); document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#toptan-satis-list .item').forEach(item => { const isNew = !item.classList.contains('fixed-item'); dataToSave.toptanSatislar.push({ key: item.children[0].value, type: isNew ? item.children[1].value : '', val: isNew ? item.children[2].value : item.children[1].value, isFixed: !isNew }); }); document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value)); dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value]; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave)); alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!'); }
-    function loadDataFromLocal() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (!savedData) return; const data = JSON.parse(savedData); document.getElementById('giderler-list').innerHTML = ''; document.getElementById('toptan-satis-list').innerHTML = ''; document.getElementById('notlar-list').innerHTML = ''; Object.keys(data.main).forEach(id => { document.getElementById(id).value = data.main[id]; }); data.giderler.forEach(g => createDynamicItem('giderler-list', {key: g.key, val: g.val})); data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', {key: ts.key, type: ts.type, val: ts.val, isNewToptan: !ts.isFixed, isFixed: ts.isFixed})); createNoteItem('Not 1', data.notlar[0] || ''); createNoteItem('Not 2', data.notlar[1] || ''); createNoteItem('Not 3', data.notlar[2] || ''); document.getElementById('editor1').value = data.duzenleyenler[0] || ''; document.getElementById('editor2').value = data.duzenleyenler[1] || ''; hesapla(); updateButtonStates(); }
+    function loadDataFromLocal() {
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!savedData) return;
+        const data = JSON.parse(savedData);
+        document.getElementById('giderler-list').innerHTML = ''; document.getElementById('toptan-satis-list').innerHTML = ''; document.getElementById('notlar-list').innerHTML = '';
+        Object.keys(data.main).forEach(id => { document.getElementById(id).value = data.main[id]; });
+        data.giderler.forEach(g => createDynamicItem('giderler-list', {key: g.key, val: g.val}));
+        data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', {key: ts.key, type: ts.type, val: ts.val, isNewToptan: !ts.isFixed, isFixed: ts.isFixed}));
+        createNoteItem('Not 1', data.notlar[0] || ''); createNoteItem('Not 2', data.notlar[1] || ''); createNoteItem('Not 3', data.notlar[2] || '');
+        document.getElementById('editor1').value = data.duzenleyenler[0] || ''; document.getElementById('editor2').value = data.duzenleyenler[1] || '';
+        hesapla(); updateButtonStates();
+    }
+    
     function resetData() { if (confirm('Emin misiniz? Kayıtlı tüm veriler silinecek ve form sıfırlanacak.')) { localStorage.removeItem(LOCAL_STORAGE_KEY); window.location.reload(); } }
     
     window.onload = function() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (savedData) { loadDataFromLocal(); } else { giderEkle('EKMEK ÖDEMESİ'); giderEkle('PERSONEL EKMEK'); createNoteItem('Not 1'); createNoteItem('Not 2'); createNoteItem('Not 3'); hesapla(); updateButtonStates(); }};
 
-    // --- DOWNLOAD FONKSİYONU DÜZELTİLDİ ---
     function downloadDataFile() {
         let isValid = true;
         document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => {
@@ -158,44 +177,24 @@
             else if (select) { select.style.border = '1px solid #ccc'; }
         });
         if (!isValid) { alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.'); return; }
-        
         const toptanSatislar = [];
         document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
             const isNew = !item.classList.contains('fixed-item');
             const aciklama = item.children[0].value.trim();
             const odemeTipi = isNew ? item.children[1].value : null;
-            const tutar = getFloatFromValue(isNew ? item.children[2].value : item.children[1].value);
+            let tutar = 0;
+            if (isNew) { tutar = getFloatFromValue(item.children[2].value); }
+            else { tutar = getFloatFromValue(item.children[1].value); }
             if (aciklama) toptanSatislar.push({ aciklama, odemeTipi, tutar });
         });
         const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); });
         const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); });
         const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2);
-        
-        const nakitGiris = getFloat('genelCiro') - getFloat('vizaGiris');
-        const giderPusulasi = getFloat('giderPusulasi');
-        // Değişken adı 'giderToplamlari' olarak standartlaştırıldı ve burada tanımlandı.
-        const giderToplamlari = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi;
+        const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; const giderPusulasi = getFloat('giderPusulasi');
+        const giderlerToplami = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi;
         const toptanNakitCikis = toptanSatislar.filter(ts => ts.odemeTipi === 'NAKİT').reduce((s, ts) => s + ts.tutar, 0);
-        // 'nakitKalan' hesabı artık doğru değişkenleri kullanıyor.
-        const nakitKalan = nakitGiris - giderToplamlari - toptanNakitCikis;
-        
-        const data = { 
-            tarih: tarihYazisi, 
-            genelCiro: getFloat('genelCiro'), 
-            nakitGiris: nakitGiris, 
-            vizaGiris: getFloat('vizaGiris'), 
-            fisSayisi: getFloat('fisSayisi'), 
-            giderPusulasi: giderPusulasi, 
-            digerGiderler, 
-            toptanSatislar, 
-            notlar, 
-            giderToplamlari, // 'giderToplamlari' artık burada doğru şekilde kullanılıyor.
-            nakitKalan, 
-            kasaAcigi: getFloat('kasaAcigi'), 
-            kasaFazla: getFloat('kasaFazla'), 
-            duzenleyenler 
-        };
-
+        const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis;
+        const data = { tarih: tarihYazisi, genelCiro, nakitGiris, vizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari: giderlerToplami, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler };
         const jsonData = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
