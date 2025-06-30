@@ -18,11 +18,17 @@
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; background-color: white; }
         .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .dynamic-list .item:not(.fixed-item) input:nth-child(1) { flex: 2.2; }
-        .dynamic-list .item:not(.fixed-item) select { flex: 1.1; }
-        .dynamic-list .item:not(.fixed-item) input:nth-child(3) { flex: 0.7; }
-        .dynamic-list .item.fixed-item input:nth-child(1), #giderler-list .item input:nth-child(1) { flex: 3; }
-        .dynamic-list .item.fixed-item input:nth-child(2), #giderler-list .item input:nth-child(2) { flex: 2; }
+        
+        /* TAŞMA SORUNU İÇİN FİNAL AYAR */
+        .dynamic-list .item:not(.fixed-item) input:nth-child(1) { flex: 2; }    /* Açıklama */
+        .dynamic-list .item:not(.fixed-item) select { flex: 1; }                 /* Ödeme Tipi */
+        .dynamic-list .item:not(.fixed-item) input:nth-child(3) { flex: 0.5; } /* Tutar (DAHA DA KÜÇÜLTÜLDÜ) */
+        
+        .dynamic-list .item.fixed-item input:nth-child(1),
+        #giderler-list .item input:nth-child(1) { flex: 3; }
+        .dynamic-list .item.fixed-item input:nth-child(2),
+        #giderler-list .item input:nth-child(2) { flex: 2; }
+
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; transition: background-color 0.2s; }
         .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
         .btn-danger { background-color: #d9534f; }
@@ -51,6 +57,8 @@
 <footer>© Copyright 2025 by Melih Emre Karaköse. All Rights Reserved.</footer>
 
 <script>
+    // Bu script bölümünün içeriği bir öncekiyle tamamen aynıdır.
+    // Değişiklik sadece yukarıdaki CSS stil bölümünde yapılmıştır.
     const MAX_GIDERLER = 12;
     const MAX_TOPTAN_SATIS = 15;
     const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri';
@@ -62,29 +70,22 @@
     function getFloat(id) { return parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0'); }
     function getFloatFromValue(valueStr) { return parseFloat((valueStr ? valueStr.replace(/\./g, '').replace(',', '.') : '0') || '0'); }
 
-    // --- HESAPLA FONKSİYONU ESKİ HALİNE DÖNDÜRÜLDÜ ---
     function hesapla() {
         const genelCiro = getFloat('genelCiro');
         const vizaGiris = getFloat('vizaGiris');
         const nakitGiris = genelCiro - vizaGiris;
-
-        // Giderleri topla (sadece giderler bölümü ve gider pusulası)
         let giderlerToplami = 0;
         document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => {
             giderlerToplami += getFloatFromValue(input.value);
         });
         giderlerToplami += getFloat('giderPusulasi');
-
-        // Bu canlı hesaplama, kullanıcının isteği üzerine toptan satışları DAHİL ETMEZ.
         const nakitKalan = nakitGiris - giderlerToplami;
-
         const kasaAcigi = getFloat('kasaAcigi');
         const kasaFazla = getFloat('kasaFazla');
         const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
         document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ',');
     }
     
-    // --- GERİ KALAN TÜM FONKSİYONLAR ÖNCEKİYLE AYNI ---
     const updateButtonStates = () => { document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER; document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS; };
     function createDynamicItem(listId, itemData) { const list = document.getElementById(listId); const item = document.createElement('div'); item.className = 'item'; if (itemData.isFixed) item.classList.add('fixed-item'); const keyInput = document.createElement('input'); keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || ''; if (itemData.isFixed) keyInput.readOnly = true; item.appendChild(keyInput); if (itemData.isNewToptan) { const select = document.createElement('select'); select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`; select.value = itemData.type || ''; select.onchange = hesapla; item.appendChild(select); } const valueInput = document.createElement('input'); valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || ''; valueInput.oninput = hesapla; item.appendChild(valueInput); const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger'; removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); }; if (!itemData.isFixed) item.appendChild(removeBtn); if (itemData.isNewToptan) { list.insertBefore(item, list.firstChild); } else { list.appendChild(item); } }
     const createNoteItem = (placeholder, val = '') => { const list = document.getElementById('notlar-list'); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; noteInput.value = val; item.appendChild(noteInput); list.appendChild(item); };
