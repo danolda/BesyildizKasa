@@ -82,7 +82,6 @@
         if (itemData.isFixed) keyInput.readOnly = true;
         item.appendChild(keyInput);
 
-        // Ödeme Tipi (Toptan satış için her zaman oluşturulur)
         if (listId === 'toptan-satis-list') {
             const select = document.createElement('select');
             select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`;
@@ -105,7 +104,6 @@
         else list.appendChild(item);
     }
     
-    // --- GERİ KALAN FONKSİYONLAR ---
     function hesapla() { const genelCiro = getFloat('genelCiro'); const vizaGiris = getFloat('vizaGiris'); const nakitGiris = genelCiro - vizaGiris; let giderlerToplami = 0; document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => giderlerToplami += getFloatFromValue(input.value)); giderlerToplami += getFloat('giderPusulasi'); const nakitKalan = nakitGiris - giderlerToplami; const kasaAcigi = getFloat('kasaAcigi'); const kasaFazla = getFloat('kasaFazla'); const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla; document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ','); }
     const updateButtonStates = () => { document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER; document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS; };
     const createNoteItem = (placeholder, val = '') => { const list = document.getElementById('notlar-list'); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; noteInput.value = val; item.appendChild(noteInput); list.appendChild(item); };
