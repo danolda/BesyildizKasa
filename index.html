@@ -19,9 +19,8 @@
         input[readonly] { background-color: #eee; cursor: not-allowed; }
         .total-display { margin-top: 20px; padding: 15px; background-color: #f0ad4e; color: #fff; font-size: 1.5em; font-weight: bold; text-align: center; border-radius: 4px; }
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .dynamic-list .item:not(.fixed-item) > *:nth-child(1) { flex: 2.5; } .dynamic-list .item:not(.fixed-item) > *:nth-child(2) { flex: 1.5; } .dynamic-list .item:not(.fixed-item) > *:nth-child(3) { flex: 1; }
-        .dynamic-list .item.fixed-item > *:nth-child(1), #giderler-list .item > *:nth-child(1) { flex: 3; }
-        .dynamic-list .item.fixed-item > *:nth-child(2), #giderler-list .item > *:nth-child(2) { flex: 2; }
+        #toptan-satis-list .item > *:nth-child(1), #giderler-list .item > *:nth-child(1) { flex: 3; }
+        #toptan-satis-list .item > *:nth-child(2), #giderler-list .item > *:nth-child(2) { flex: 2; }
         .btn { display: inline-block; padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 10px; transition: background-color 0.2s; }
         .btn:disabled { background-color: #cccccc; cursor: not-allowed; } .btn-danger { background-color: #d9534f; } .btn-save { background-color: #f0ad4e; } .btn:hover:not(:disabled) { opacity: 0.9; }
         .controls-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -98,20 +97,17 @@
 <footer>© Copyright 2025 by Melih Emre Karaköse. All Rights Reserved.</footer>
 
 <script>
-    const MAX_GIDERLER = 12;
-    const MAX_TOPTAN_SATIS = 15;
-    const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri';
-    const tarih = new Date();
-    const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
-    document.getElementById('current-date').textContent = tarihYazisi;
-
+    const MAX_GIDERLER = 12; const MAX_TOPTAN_SATIS = 15; const LOCAL_STORAGE_KEY = 'kasaRaporuVerileri'; const tarih = new Date(); const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase(); document.getElementById('current-date').textContent = tarihYazisi;
+    
     function getFloat(id) { return parseFloat((document.getElementById(id).value.replace(/\./g, '').replace(',', '.')) || '0'); }
     function getFloatFromValue(valueStr) { return parseFloat((valueStr ? valueStr.replace(/\./g, '').replace(',', '.') : '0') || '0'); }
+    
     function hesapla() {
         let toptanVisaToplam = 0;
-        document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item)').forEach(item => {
-            if (item.querySelector('select')?.value === 'VİSA') {
-                toptanVisaToplam += getFloatFromValue(item.querySelector('input[type=text]:last-of-type').value);
+        document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
+            const aciklama = item.children[0].value.toUpperCase();
+            if (aciklama.includes('VİSA') || aciklama.includes('VISA')) {
+                toptanVisaToplam += getFloatFromValue(item.children[1].value);
             }
         });
         const saltTeb = getFloat('saltTeb');
@@ -120,9 +116,7 @@
         const genelCiro = getFloat('genelCiro');
         const nakitGiris = genelCiro - tebbankasiDegeri;
         let giderlerToplami = 0;
-        document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => {
-            giderlerToplami += getFloatFromValue(input.value);
-        });
+        document.querySelectorAll('#giderler-list .item input:last-of-type').forEach(input => giderlerToplami += getFloatFromValue(input.value));
         giderlerToplami += getFloat('giderPusulasi');
         const nakitKalan = nakitGiris - giderlerToplami;
         const kasaAcigi = getFloat('kasaAcigi');
@@ -130,174 +124,74 @@
         const toplamNakitKalan = nakitKalan - kasaAcigi + kasaFazla;
         document.getElementById('toplamNakitKalan').textContent = toplamNakitKalan.toFixed(2).replace('.', ',');
     }
-    const updateButtonStates = () => {
-        document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER;
-        document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS;
-    };
+
+    const updateButtonStates = () => { document.querySelector('.section:has(#giderler-list) .btn').disabled = document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER; document.querySelector('.section:has(#toptan-satis-list) .btn').disabled = document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS; };
+    
     function createDynamicItem(listId, itemData) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
         if (itemData.isFixed) item.classList.add('fixed-item');
         const keyInput = document.createElement('input');
-        keyInput.type = 'text';
-        keyInput.placeholder = 'Açıklama';
-        keyInput.value = itemData.key || '';
+        keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || '';
+        keyInput.oninput = hesapla;
         if (itemData.isFixed) keyInput.readOnly = true;
         item.appendChild(keyInput);
-        if (listId === 'toptan-satis-list') {
-            const select = document.createElement('select');
-            select.innerHTML = `<option value="">Ödeme Tipi</option><option value="NAKİT">NAKİT</option><option value="VİSA">VİSA</option>`;
-            select.value = itemData.type || '';
-            select.onchange = hesapla;
-            item.appendChild(select);
-        }
         const valueInput = document.createElement('input');
-        valueInput.type = 'text';
-        valueInput.inputMode = 'decimal';
-        valueInput.placeholder = 'Tutar';
-        valueInput.value = itemData.val || '';
+        valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || '';
         valueInput.oninput = hesapla;
         item.appendChild(valueInput);
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Sil';
-        removeBtn.className = 'btn btn-danger';
-        removeBtn.onclick = () => {
-            item.remove();
-            hesapla();
-            updateButtonStates();
-        };
-        item.appendChild(removeBtn);
-        if (itemData.isFixed) {
-            removeBtn.style.visibility = 'hidden';
-            if(item.querySelector('select')) {
-                item.querySelector('select').style.visibility = 'hidden';
-            }
+        if (!itemData.isFixed) {
+            const removeBtn = document.createElement('button'); removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
+            removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); };
+            item.appendChild(removeBtn);
         }
-        if (itemData.isNewToptan) {
-            list.insertBefore(item, list.firstChild);
-        } else {
-            list.appendChild(item);
-        }
+        if (itemData.isNewToptan) { list.insertBefore(item, list.firstChild); } else { list.appendChild(item); }
     }
-    const createNoteItem = (placeholder, val = '') => {
-        const list = document.getElementById('notlar-list');
-        const item = document.createElement('div');
-        item.className = 'item note-item';
-        const noteInput = document.createElement('input');
-        noteInput.type = 'text';
-        noteInput.placeholder = placeholder;
-        noteInput.value = val;
-        item.appendChild(noteInput);
-        list.appendChild(item);
-    };
-    const giderEkle = (key = '', val = '') => {
-        if (document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER) return;
-        createDynamicItem('giderler-list', { key, val });
-        updateButtonStates();
-    };
-    const toptanSatisEkle = (key = '', type = '', val = '') => {
-        if (document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS) return;
-        createDynamicItem('toptan-satis-list', { key, type, val, isNewToptan: true });
-        updateButtonStates();
-    };
-    function saveDataToLocal() {
-        const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] };
-        ['genelCiro', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla', 'saltTeb'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; });
-        document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value }));
-        document.querySelectorAll('#toptan-satis-list .item').forEach(item => { dataToSave.toptanSatislar.push({ key: item.children[0].value, type: item.children[1].value, val: item.children[2].value, isFixed: item.classList.contains('fixed-item') }); });
-        document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value));
-        dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value];
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
-        alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!');
-    }
-    function loadDataFromLocal() {
-        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (!savedData) return;
-        const data = JSON.parse(savedData);
-        document.getElementById('giderler-list').innerHTML = '';
-        document.getElementById('toptan-satis-list').innerHTML = '';
-        document.getElementById('notlar-list').innerHTML = '';
-        Object.keys(data.main).forEach(id => { if (document.getElementById(id)) document.getElementById(id).value = data.main[id]; });
-        data.giderler.forEach(g => createDynamicItem('giderler-list', { key: g.key, val: g.val }));
-        data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', { key: ts.key, type: ts.type, val: ts.val, isNewToptan: !ts.isFixed, isFixed: ts.isFixed }));
-        createNoteItem('Not 1', data.notlar[0] || '');
-        createNoteItem('Not 2', data.notlar[1] || '');
-        createNoteItem('Not 3', data.notlar[2] || '');
-        document.getElementById('editor1').value = data.duzenleyenler[0] || '';
-        document.getElementById('editor2').value = data.duzenleyenler[1] || '';
-        hesapla();
-        updateButtonStates();
-    }
+
+    const createNoteItem = (placeholder, val = '') => { const list = document.getElementById('notlar-list'); const item = document.createElement('div'); item.className = 'item note-item'; const noteInput = document.createElement('input'); noteInput.type = 'text'; noteInput.placeholder = placeholder; noteInput.value = val; item.appendChild(noteInput); list.appendChild(item); };
+    const giderEkle = (key = '', val = '') => { if (document.querySelectorAll('#giderler-list .item').length >= MAX_GIDERLER) return; createDynamicItem('giderler-list', {key, val}); updateButtonStates(); };
+    const toptanSatisEkle = (key = '', val = '') => { if (document.querySelectorAll('#toptan-satis-list .item').length >= MAX_TOPTAN_SATIS) return; createDynamicItem('toptan-satis-list', {key, val, isNewToptan: true}); updateButtonStates(); };
+
+    function saveDataToLocal() { const dataToSave = { main: {}, giderler: [], toptanSatislar: [], notlar: [], duzenleyenler: [] }; ['genelCiro', 'fisSayisi', 'giderPusulasi', 'kasaAcigi', 'kasaFazla', 'saltTeb'].forEach(id => { dataToSave.main[id] = document.getElementById(id).value; }); document.querySelectorAll('#giderler-list .item').forEach(item => dataToSave.giderler.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#toptan-satis-list .item').forEach(item => dataToSave.toptanSatislar.push({ key: item.children[0].value, val: item.children[1].value })); document.querySelectorAll('#notlar-list .item input').forEach(input => dataToSave.notlar.push(input.value)); dataToSave.duzenleyenler = [document.getElementById('editor1').value, document.getElementById('editor2').value]; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave)); alert('Verileriniz bu tarayıcıya başarıyla kaydedildi!'); }
+    function loadDataFromLocal() { const savedData = localStorage.getItem(LOCAL_STORAGE_KEY); if (!savedData) return; const data = JSON.parse(savedData); document.getElementById('giderler-list').innerHTML = ''; document.getElementById('toptan-satis-list').innerHTML = ''; document.getElementById('notlar-list').innerHTML = ''; Object.keys(data.main).forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = data.main[id]; }); data.giderler.forEach(g => createDynamicItem('giderler-list', {key: g.key, val: g.val})); data.toptanSatislar.forEach(ts => createDynamicItem('toptan-satis-list', {key: ts.key, val: ts.val, isNewToptan: !ts.isFixed, isFixed: ts.isFixed})); createNoteItem('Not 1', data.notlar[0] || ''); createNoteItem('Not 2', data.notlar[1] || ''); createNoteItem('Not 3', data.notlar[2] || ''); document.getElementById('editor1').value = data.duzenleyenler[0] || ''; document.getElementById('editor2').value = data.duzenleyenler[1] || ''; hesapla(); updateButtonStates(); }
     function resetData() { if (confirm('Emin misiniz? Kayıtlı tüm veriler silinecek ve form sıfırlanacak.')) { localStorage.removeItem(LOCAL_STORAGE_KEY); window.location.reload(); } }
+    
     window.onload = function () {
         const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (savedData) {
             loadDataFromLocal();
         } else {
-            giderEkle('EKMEK ÖDEMESİ');
-            giderEkle('PERSONEL EKMEK');
+            giderEkle('EKMEK ÖDEMESİ'); giderEkle('PERSONEL EKMEK');
             createDynamicItem('toptan-satis-list', { key: 'SODEXO', isFixed: true });
             createDynamicItem('toptan-satis-list', { key: 'SETCARD', isFixed: true });
             createDynamicItem('toptan-satis-list', { key: 'TOKEN', isFixed: true });
             createDynamicItem('toptan-satis-list', { key: 'TICKET', isFixed: true });
-            createNoteItem('Not 1');
-            createNoteItem('Not 2');
-            createNoteItem('Not 3');
-            hesapla();
-            updateButtonStates();
+            createNoteItem('Not 1'); createNoteItem('Not 2'); createNoteItem('Not 3');
+            hesapla(); updateButtonStates();
         }
     };
+
     function downloadDataFile() {
-        let isValid = true;
-        document.querySelectorAll('#toptan-satis-list .item:not(.fixed-item) select').forEach(select => {
-            if (select && select.value === "") {
-                select.style.border = '2px solid red';
-                isValid = false;
-            } else if (select) {
-                select.style.border = '1px solid #ccc';
-            }
-        });
-        if (!isValid) {
-            alert('Lütfen tüm yeni toptan satışlar için bir "Ödeme Tipi" seçin.');
-            return;
-        }
         const toptanSatislar = [];
         document.querySelectorAll('#toptan-satis-list .item').forEach(item => {
             const aciklama = item.children[0].value.trim();
-            const odemeTipi = item.classList.contains('fixed-item') ? null : item.children[1].value;
-            const tutar = getFloatFromValue(item.children[2].value);
+            const tutar = getFloatFromValue(item.children[1].value);
             if (aciklama) {
-                toptanSatislar.push({ aciklama, odemeTipi, tutar });
+                toptanSatislar.push({ aciklama, tutar });
             }
         });
-        const toptanVisaToplam = toptanSatislar.filter(ts => ts.odemeTipi === 'VİSA').reduce((s, ts) => s + ts.tutar, 0);
+        const toptanVisaToplam = toptanSatislar.filter(ts => ts.aciklama.toUpperCase().includes('VİSA') || ts.aciklama.toUpperCase().includes('VISA')).reduce((s, ts) => s + ts.tutar, 0);
         const saltTeb = getFloat('saltTeb');
         const vizaGiris = saltTeb - toptanVisaToplam;
-        const digerGiderler = [];
-        document.querySelectorAll('#giderler-list .item').forEach(item => {
-            const aciklama = item.children[0].value.trim();
-            const tutar = getFloatFromValue(item.children[1].value);
-            if (aciklama && tutar > 0) {
-                digerGiderler.push({ aciklama, tutar });
-            }
-        });
-        const notlar = [];
-        document.querySelectorAll('#notlar-list .item input').forEach(input => {
-            if (input.value.trim()) {
-                notlar.push(input.value.trim());
-            }
-        });
-        const duzenleyenler = [];
-        const editor1 = document.getElementById('editor1').value.trim();
-        const editor2 = document.getElementById('editor2').value.trim();
-        if (editor1) duzenleyenler.push(editor1);
-        if (editor2) duzenleyenler.push(editor2);
+        const digerGiderler = []; document.querySelectorAll('#giderler-list .item').forEach(item => { const aciklama = item.children[0].value.trim(); const tutar = getFloatFromValue(item.children[1].value); if (aciklama && tutar > 0) digerGiderler.push({ aciklama, tutar }); });
+        const notlar = []; document.querySelectorAll('#notlar-list .item input').forEach(input => { if (input.value.trim()) notlar.push(input.value.trim()); });
+        const duzenleyenler = []; const editor1 = document.getElementById('editor1').value.trim(); const editor2 = document.getElementById('editor2').value.trim(); if (editor1) duzenleyenler.push(editor1); if (editor2) duzenleyenler.push(editor2);
         const genelCiro = getFloat('genelCiro');
         const nakitGiris = genelCiro - vizaGiris;
         const giderPusulasi = getFloat('giderPusulasi');
         const giderlerToplami = digerGiderler.reduce((s, g) => s + g.tutar, 0) + giderPusulasi;
-        const toptanNakitCikis = toptanSatislar.filter(ts => ts.odemeTipi === 'NAKİT').reduce((s, ts) => s + ts.tutar, 0);
+        const toptanNakitCikis = toptanSatislar.filter(ts => ts.aciklama.toUpperCase().includes('NAKİT')).reduce((s, ts) => s + ts.tutar, 0);
         const nakitKalan = nakitGiris - giderlerToplami - toptanNakitCikis;
         const data = { tarih: tarihYazisi, genelCiro, nakitGiris, vizaGiris, fisSayisi: getFloat('fisSayisi'), giderPusulasi, digerGiderler, toptanSatislar, notlar, giderToplamlari, nakitKalan, kasaAcigi: getFloat('kasaAcigi'), kasaFazla: getFloat('kasaFazla'), duzenleyenler, saltTeb };
         const jsonData = JSON.stringify(data, null, 2);
@@ -316,22 +210,8 @@
         const resultDisplay = document.getElementById('calc-result');
         const historyContent = document.getElementById('history-content');
         let expression = '';
-
         function evaluateExpression(expr) { try { return new Function('return ' + expr.replace(/,/g, '.'))(); } catch (e) { return null; } }
-        function updateDisplay() {
-            expressionDisplay.textContent = expression.replace(/\//g, '÷').replace(/\*/g, '×').replace(/\./g, ',') || ' ';
-            const lastChar = expression.slice(-1);
-            if (!['+', '-', '*', '/'].includes(lastChar) && expression) {
-                const result = evaluateExpression(expression);
-                if (result !== null) {
-                    resultDisplay.textContent = result.toLocaleString('tr-TR', { maximumFractionDigits: 5 });
-                }
-            } else if (expression === '') {
-                resultDisplay.textContent = '0';
-            } else {
-                resultDisplay.textContent = '';
-            }
-        }
+        function updateDisplay() { expressionDisplay.textContent = expression.replace(/\//g, '÷').replace(/\*/g, '×').replace(/\./g, ',') || ' '; const lastChar = expression.slice(-1); if (!['+', '-', '*', '/'].includes(lastChar) && expression) { const result = evaluateExpression(expression); if (result !== null) { resultDisplay.textContent = result.toLocaleString('tr-TR', { maximumFractionDigits: 5 }); } } else if (expression === '') { resultDisplay.textContent = '0'; } else { resultDisplay.textContent = ''; } }
         function addToHistory(expr, result) { const historyItem = document.createElement('div'); historyItem.className = 'history-item'; historyItem.innerHTML = `<span class="expr">${expr.replace(/\//g, '÷').replace(/\*/g, '×').replace(/\./g, ',')}</span><span class="res">${result.toLocaleString('tr-TR', { maximumFractionDigits: 5 })}</span>`; historyItem.addEventListener('click', () => { expression = String(result).replace('.', ','); resultDisplay.textContent = result.toLocaleString('tr-TR', { maximumFractionDigits: 5 }); expressionDisplay.textContent = ' '; }); historyContent.prepend(historyItem); }
         document.querySelector('.calculator-wrapper').addEventListener('click', (event) => {
             const key = event.target.dataset.key; if (!key) return;
