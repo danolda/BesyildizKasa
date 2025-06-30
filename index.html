@@ -20,7 +20,6 @@
         .dynamic-list .item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         
         /* --- YENİ VE GARANTİLİ HİZALAMA KURALLARI --- */
-
         /* Giderler Bölümü İçin Ayrı Kural */
         #giderler-list .item > *:nth-child(1) { flex: 3; } /* Açıklama */
         #giderler-list .item > *:nth-child(2) { flex: 2; } /* Tutar */
@@ -72,18 +71,14 @@
     const tarihYazisi = tarih.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + " " + tarih.toLocaleDateString('tr-TR', { weekday: 'long' }).toUpperCase();
     document.getElementById('current-date').textContent = tarihYazisi;
 
-    // --- JAVASCRIPT CREATEITEM FONKSİYONU GÜNCELLENDİ ---
     function createDynamicItem(listId, itemData) {
         const list = document.getElementById(listId);
         const item = document.createElement('div');
         item.className = 'item';
         if (itemData.isFixed) item.classList.add('fixed-item');
 
-        // Açıklama
         const keyInput = document.createElement('input');
-        keyInput.type = 'text';
-        keyInput.placeholder = 'Açıklama';
-        keyInput.value = itemData.key || '';
+        keyInput.type = 'text'; keyInput.placeholder = 'Açıklama'; keyInput.value = itemData.key || '';
         if (itemData.isFixed) keyInput.readOnly = true;
         item.appendChild(keyInput);
 
@@ -96,19 +91,13 @@
             item.appendChild(select);
         }
 
-        // Tutar
         const valueInput = document.createElement('input');
-        valueInput.type = 'text';
-        valueInput.inputMode = 'decimal';
-        valueInput.placeholder = 'Tutar';
-        valueInput.value = itemData.val || '';
+        valueInput.type = 'text'; valueInput.inputMode = 'decimal'; valueInput.placeholder = 'Tutar'; valueInput.value = itemData.val || '';
         valueInput.oninput = hesapla;
         item.appendChild(valueInput);
 
-        // Sil Butonu
         const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Sil';
-        removeBtn.className = 'btn btn-danger';
+        removeBtn.textContent = 'Sil'; removeBtn.className = 'btn btn-danger';
         removeBtn.onclick = () => { item.remove(); hesapla(); updateButtonStates(); };
         item.appendChild(removeBtn);
         
