@@ -46,6 +46,48 @@
         .menu-item.status-complete .menu-item-title { color: #155724; }
         .navigation-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
         .main-menu-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+
+        /* ======================================================= */
+        /* MOBİL CİHAZLAR İÇİN OPTİMİZASYON KODU (YENİ EKLENDİ)     */
+        /* ======================================================= */
+        @media (max-width: 600px) {
+            /* Ekran 600px'den darsa bu stiller uygulanır */
+
+            .container {
+                /* Telefondaki kenar boşluklarını azaltalım */
+                margin: 0;
+                padding: 10px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .dynamic-list .item {
+                /* Flex yönünü dikey (alt alta) yap */
+                flex-direction: column;
+                /* Elemanları sola hizala */
+                align-items: flex-start;
+            }
+
+            /* Açıklama ve Tutar kutularının flex oranlarını sıfırla */
+            .item > *:nth-child(1),
+            .item > *:nth-child(2) {
+                flex: none;
+                width: 100%; /* Kutu genişliğini %100 yap */
+            }
+
+            /* Silme butonunu sağa hizala ve daha kullanışlı yap */
+            .dynamic-list .item .btn-danger {
+                align-self: flex-end; /* Butonu sağa yasla */
+                width: auto; /* Genişliği içeriğine göre olsun */
+                padding: 8px 12px;
+            }
+
+            .calculator-wrapper {
+                 /* Hesap makinesinin üst boşluğunu azalt */
+                margin-top: 20px;
+            }
+        }
+
     </style>
 </head>
 <body>
