@@ -4,14 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Günlük Kasa Veri Girişi</title>
-   
-    
-    <!-- Manifest dosyasını bağlayan asıl satır -->
-    <link rel="manifest" href="/manifest.json">
 
-    <!-- Apple cihazlar için ikon (isteğe bağlı ama önerilir) -->
-    <link rel="apple-touch-icon" href="/icon-192.png"> 
-    
+     <!-- ... diğer meta etiketleriniz ... -->
+    <link rel="manifest" href="/BesyildizKasa/manifest.json"> <!-- Bu yolun da doğru olduğundan emin olun -->
+
+    <!-- ============================================= -->
+    <!--      APPLE CİHAZLAR İÇİN ZORUNLU KODLAR      -->
+    <!-- ============================================= -->
+
+    <!-- 1. Ana Ekranda Görünecek İkon -->
+    <!-- Sizin için doğru yol bu olmalı: -->
+    <link rel="apple-touch-icon" href="/BesyildizKasa/icon-192.png">
+
+    <!-- 2. Tam Ekran Modunda Çalıştırma (Tarayıcı arayüzünü gizler) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- 3. Ana Ekrandaki İkonun Altındaki Başlık -->
+    <meta name="apple-mobile-web-app-title" content="Kasa Raporu">
+
+    <!-- 4. Durum Çubuğu Rengi (default, black, black-translucent) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- ============================================= -->
 
     <style>
